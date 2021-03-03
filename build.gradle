@@ -1,0 +1,86 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "$kotlinVersion"
+    id "org.jetbrains.kotlin.kapt" version "$kotlinVersion"
+    id "org.jetbrains.kotlin.plugin.allopen" version "$kotlinVersion"
+    id "com.github.johnrengelman.shadow" version "$johnrengelmanShadowVersion"
+    id "application"
+}
+
+
+
+version "0.1"
+
+group "no.nav.arbeidsplassen.emailer"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url "https://jcenter.bintray.com" }
+    maven { url "https://github-package-registry-mirror.gc.nav.no/cached/maven-release"}
+}
+
+configurations {
+    // for dependencies that are needed for development only
+    developmentOnly
+}
+
+dependencies {
+    implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}"
+    implementation "io.micronaut:micronaut-runtime"
+    implementation "javax.annotation:javax.annotation-api"
+    implementation "io.micronaut:micronaut-http-server-netty"
+    implementation "io.micronaut:micronaut-http-client"
+    implementation "com.microsoft.azure:adal4j:$adal4jVersion"
+    kapt platform("io.micronaut:micronaut-bom:$micronautVersion")
+    kapt "io.micronaut:micronaut-inject-java"
+    kapt "io.micronaut:micronaut-validation"
+    kaptTest platform("io.micronaut:micronaut-bom:$micronautVersion")
+    kaptTest "io.micronaut:micronaut-inject-java"
+    implementation "ch.qos.logback:logback-classic:$logbackVersion"
+    implementation "net.logstash.logback:logstash-logback-encoder:$logbackEncoderVersion"
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion"
+    testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    testImplementation "io.micronaut.test:micronaut-test-junit5:1.1.2"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine:5.1.0"
+    implementation "io.micronaut.micrometer:micronaut-micrometer-core:$micronautVersion"
+    implementation "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus:$micronautVersion"
+    implementation "io.micronaut:micronaut-management:$micronautVersion"
+    kapt platform("io.micronaut:micronaut-bom:$micronautVersion")
+}
+
+test.classpath += configurations.developmentOnly
+
+mainClassName = "no.nav.arbeidsplassen.emailer.Application"
+
+test {
+    exclude "**/*IT.class"
+    useJUnitPlatform()
+}
+
+allOpen {
+	annotation("io.micronaut.aop.Around")
+}
+
+compileKotlin {
+	kotlinOptions {
+	    jvmTarget = '12'
+	    //Will retain parameter names for Java reflection
+	    javaParameters = true
+	}
+}
+
+compileTestKotlin {
+	kotlinOptions {
+	    jvmTarget = '12'
+	    javaParameters = true
+	}
+}
+
+shadowJar {
+    mergeServiceFiles()
+}
+
+run.classpath += configurations.developmentOnly
+run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')

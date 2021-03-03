@@ -1,0 +1,40 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: pam-emailer
+  namespace: teampam
+  labels:
+    team: teampam
+spec:
+  image: {{ image }}
+  port: 8080
+  liveness:
+    path: /internal/isAlive
+    initialDelay: 20
+  readiness:
+    path: /internal/isReady
+    initialDelay: 20
+  replicas:
+    min: 2
+    max: 2
+    cpuThresholdPercentage: 50
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1024Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  vault:
+    enabled: false
+  webproxy: false
+  prometheus:
+    enabled: true
+    path: /prometheus
+  env:
+    - name: AZURE_AD_USER_PRINCIPAL
+      value: {{ azure_ad_user_principal }}
+  accessPolicy:
+    outbound:
+      rules:
+        - application: login.microsoft.com

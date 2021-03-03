@@ -1,0 +1,4 @@
+profile: service
+defaultPackage: no.nav.arbeidsplassen.emailer
+---
+sourceLanguage: kotlin
