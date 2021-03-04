@@ -1,3 +1,3 @@
 {
-  "azure_ad_principal": "no-reply-arbeidsplassen@nav.no"
+  "ingress": ["https://pam-emailer.prod-gcp.nais.io"]
 }

@@ -1,4 +1,4 @@
-package no.nav.arbeidsplassen.emailer.azure
+package no.nav.arbeidsplassen.emailer
 
 import io.micronaut.runtime.Micronaut
 

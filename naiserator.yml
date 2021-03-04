@@ -31,10 +31,14 @@ spec:
   prometheus:
     enabled: true
     path: /prometheus
-  env:
-    - name: AZURE_AD_USER_PRINCIPAL
-      value: {{ azure_ad_user_principal }}
+  ingresses:
+  {{#each ingress as |url|}}
+      - {{url}}
+  {{/each}}
+  envFrom:
+    - secret: pam-emailer
   accessPolicy:
     outbound:
       rules:
-        - application: login.microsoft.com
+        - application: login.microsoftonline.com
+        - appplication: graph.microsoft.com
