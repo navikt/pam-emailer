@@ -5,12 +5,19 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Produces
 import io.micronaut.http.server.exceptions.ExceptionHandler
 import no.nav.arbeidsplassen.emailer.azure.impl.SendMailException
+import org.slf4j.LoggerFactory
 import javax.inject.Singleton
 
 @Produces
 @Singleton
 class SendMailExceptionHandler : ExceptionHandler<SendMailException, HttpResponse<String>> {
 
-    override fun handle(request: HttpRequest<*>, error: SendMailException):
-            HttpResponse<String> = HttpResponse.serverError(error.message)
+    companion object {
+        private val LOG = LoggerFactory.getLogger(SendMailExceptionHandler::class.java)
+    }
+    override fun handle(request: HttpRequest<*>, error: SendMailException): HttpResponse<String> {
+        LOG.error("We got error while sending email", error)
+        return HttpResponse.serverError(error.message)
+    }
+
 }
