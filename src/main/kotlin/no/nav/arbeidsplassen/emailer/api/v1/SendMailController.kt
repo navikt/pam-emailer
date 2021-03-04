@@ -17,7 +17,7 @@ class SendMailController(private val emailServiceAzure: EmailServiceAzure) {
     }
 
     @Post
-    fun sendMail(@PathVariable source: String, @Body email: EmailDTO): HttpResponse<String> {
+    fun sendMail(@Body email: EmailDTO): HttpResponse<String> {
         emailServiceAzure.sendSimpleMessage(email.recipient, email.subject,
             MailContentType.valueOf(email.type),email.content)
         return HttpResponse.created("Created")
