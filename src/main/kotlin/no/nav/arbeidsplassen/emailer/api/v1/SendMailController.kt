@@ -16,7 +16,7 @@ class SendMailController(private val emailServiceAzure: EmailServiceAzure) {
         private val LOG = LoggerFactory.getLogger(SendMailController::class.java)
     }
 
-    @Post("")
+    @Post
     fun sendMail(@PathVariable source: String, @Body email: EmailDTO): HttpResponse<String> {
         emailServiceAzure.sendSimpleMessage(email.recipient, email.subject,
             MailContentType.valueOf(email.type),email.content)
