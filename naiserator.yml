@@ -39,6 +39,14 @@ spec:
     - secret: pam-emailer
   accessPolicy:
     outbound:
-      rules:
-        - application: login.microsoftonline.com
-        - appplication: graph.microsoft.com
+      external:
+        - host: login.microsoftonline.com
+          ports:
+            - port: 443
+              name: https
+              protocol: HTTPS
+        - host: graph.microsoft.com
+          ports:
+            - port: 443
+              name: https
+              protocol: HTTPS
