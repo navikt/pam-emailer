@@ -38,6 +38,9 @@ spec:
   envFrom:
     - secret: pam-emailer
   accessPolicy:
+    inbound:
+      rules:
+        - application: pam-samtykke-api
     outbound:
       external:
         - host: login.microsoftonline.com
