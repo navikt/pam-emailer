@@ -41,8 +41,9 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, val client
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON_TYPE)
         LOG.debug("sending mail using {}", aadProperties.resource)
-        client.exchange(postEmail,String::class.java)
-        LOG.info("mail sent")
+        kotlin.runCatching {
+            client.toBlocking().exchange(postEmail, String::class.java).status
+        }.onSuccess { LOG.info("mail sent $it")}.onFailure { LOG.error("Got error", it) }
     }
 
     private fun renewTokenIfExpired() {
