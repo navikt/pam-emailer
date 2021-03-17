@@ -6,6 +6,7 @@ import com.microsoft.aad.adal4j.ClientCredential
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.RxHttpClient
+import io.micronaut.http.client.annotation.Client
 import no.nav.arbeidsplassen.emailer.azure.dto.*
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
@@ -14,7 +15,7 @@ import java.util.concurrent.Executors
 import javax.inject.Singleton
 
 @Singleton
-class EmailServiceAzure(private val aadProperties: AzureADProperties, val client: RxHttpClient) {
+class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("SendMail") val client: RxHttpClient) {
     private val sendEmailUri: String = aadProperties.resource + "/v1.0/users/" + aadProperties.userPrincipal + "/sendMail"
 
     companion object {
@@ -42,8 +43,8 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, val client
             .accept(MediaType.APPLICATION_JSON_TYPE)
         LOG.debug("sending mail using {}", aadProperties.resource)
         kotlin.runCatching {
-            client.toBlocking().exchange(postEmail, String::class.java).status
-        }.onSuccess { LOG.info("mail sent $it")}.onFailure { LOG.error("Got error", it) }
+            client.exchange(postEmail, String::class.java).blockingFirst()
+        }.onSuccess { LOG.info("mail sent")}.onFailure { LOG.error("Got error", it) }
     }
 
     private fun renewTokenIfExpired() {
