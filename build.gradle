@@ -44,8 +44,8 @@ dependencies {
     testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
     testImplementation "io.micronaut.test:micronaut-test-junit5:1.1.2"
     testImplementation "org.junit.jupiter:junit-jupiter-engine:5.1.0"
-    implementation "io.micronaut.micrometer:micronaut-micrometer-core:$micronautVersion"
-    implementation "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus:$micronautVersion"
+    implementation "io.micronaut.configuration:micronaut-micrometer-core:$micronautMicrometerVersion"
+    implementation "io.micronaut.configuration:micronaut-micrometer-registry-prometheus:$micronautMicrometerVersion"
     implementation "io.micronaut:micronaut-management:$micronautVersion"
     kapt platform("io.micronaut:micronaut-bom:$micronautVersion")
 }
