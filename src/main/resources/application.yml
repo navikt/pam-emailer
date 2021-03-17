@@ -1,9 +1,11 @@
 micronaut:
   application:
     name: pam-emailer
+  server:
+    read-timeout: 120
   http:
     client:
-      read-timeout: 60s
+      read-timeout: 30s
   metrics:
     enabled: true
     sensitive: false
