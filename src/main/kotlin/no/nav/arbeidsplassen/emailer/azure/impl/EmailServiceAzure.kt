@@ -1,5 +1,9 @@
 package no.nav.arbeidsplassen.emailer.azure.impl
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.microsoft.aad.adal4j.AuthenticationContext
 import com.microsoft.aad.adal4j.AuthenticationResult
 import com.microsoft.aad.adal4j.ClientCredential
@@ -9,6 +13,9 @@ import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
 import no.nav.arbeidsplassen.emailer.azure.dto.*
 import org.slf4j.LoggerFactory
+import java.io.InputStream
+import java.net.HttpURLConnection
+import java.net.URL
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.concurrent.Executors
@@ -21,14 +28,22 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
     companion object {
         private val LOG = LoggerFactory.getLogger(EmailServiceAzure::class.java)
     }
+    private val objectMapper = ObjectMapper().apply {
+        registerModule(KotlinModule())
+        registerModule(JavaTimeModule())
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    }
+
 
     @Volatile
     private var token: AADToken? = null
 
+
     fun sendSimpleMessage(to: String, subject: String, contentType: MailContentType, content: String, id: String) {
         val email = Email(Message(subject, Body(contentType, content), listOf(Recipient(Address(to.trim())))))
         try {
-            sendMail(email, id)
+            sendMailUsingURLConnection(email, id)
+//            sendMail(email, id)
         } catch (e: Exception) {
             throw SendMailException(e.message,e)
         }
@@ -60,6 +75,36 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
         }
     }
 
+    private fun sendMailUsingURLConnection(email: Email, id: String) {
+        renewTokenIfExpired()
+        val emailAsJson = objectMapper.writeValueAsString(email)
+        val (responseCode, responseBody) = with(URL(sendEmailUri).openConnection() as HttpURLConnection) {
+            requestMethod = "POST"
+            connectTimeout = 20000
+            readTimeout = 60000
+            useCaches = false
+
+            setRequestProperty("Authorization", "Bearer ${token!!.accessToken}")
+            setRequestProperty("Content-Type", MediaType.APPLICATION_JSON)
+            setRequestProperty("Accept", MediaType.APPLICATION_JSON)
+            doOutput = true
+
+            outputStream.writer(Charsets.UTF_8).apply {
+                write(emailAsJson)
+                flush()
+            }
+
+            val stream: InputStream? = if (responseCode < 300) this.inputStream else this.errorStream
+            responseCode to stream?.use{ s->s.bufferedReader()?.readText()}
+        }
+
+        if (responseCode >= 300 || responseBody == null) {
+            LOG.error("Got error $responseCode for $id")
+        } else {
+            LOG.info("mail sent $id")
+        }
+
+    }
     private val aADToken: AADToken
         get() {
             val service = Executors.newSingleThreadExecutor()
