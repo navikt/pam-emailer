@@ -10,6 +10,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn
 import no.nav.arbeidsplassen.emailer.azure.dto.MailContentType
 import no.nav.arbeidsplassen.emailer.azure.impl.EmailServiceAzure
 import org.slf4j.LoggerFactory
+import java.util.*
 
 @Controller("/api/v1/sendmail")
 class SendMailController(private val emailServiceAzure: EmailServiceAzure) {
@@ -21,9 +22,10 @@ class SendMailController(private val emailServiceAzure: EmailServiceAzure) {
     @Post
     @ExecuteOn(TaskExecutors.IO)
     fun sendMail(@Body email: EmailDTO): HttpResponse<String> {
-        LOG.info("Got email request with id: ${email.identifier}")
+        val id = email.identifier ?: UUID.randomUUID().toString()
+        LOG.info("Got email request with id: ${id}")
         emailServiceAzure.sendSimpleMessage(email.recipient, email.subject,
-            MailContentType.valueOf(email.type),email.content)
+            MailContentType.valueOf(email.type),email.content, id)
         return HttpResponse.created("Created")
     }
 }

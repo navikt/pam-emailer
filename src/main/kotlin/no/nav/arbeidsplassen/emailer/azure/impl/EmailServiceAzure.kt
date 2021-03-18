@@ -25,16 +25,16 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
     @Volatile
     private var token: AADToken? = null
 
-    fun sendSimpleMessage(to: String, subject: String, contentType: MailContentType, content: String) {
+    fun sendSimpleMessage(to: String, subject: String, contentType: MailContentType, content: String, id: String) {
         val email = Email(Message(subject, Body(contentType, content), listOf(Recipient(Address(to.trim())))))
         try {
-            sendMail(email)
+            sendMail(email, id)
         } catch (e: Exception) {
             throw SendMailException(e.message,e)
         }
     }
 
-    private fun sendMail(email: Email) {
+    private fun sendMail(email: Email, id: String) {
         renewTokenIfExpired()
         val postEmail = HttpRequest.POST(
             sendEmailUri,
@@ -44,7 +44,7 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
         LOG.debug("sending mail using {}", aadProperties.resource)
         kotlin.runCatching {
             client.exchange(postEmail, String::class.java).blockingFirst()
-        }.onSuccess { LOG.info("mail sent")}.onFailure { LOG.error("Got error", it) }
+        }.onSuccess { LOG.info("mail sent $id")}.onFailure { LOG.error("Got error $id", it) }
     }
 
     private fun renewTokenIfExpired() {

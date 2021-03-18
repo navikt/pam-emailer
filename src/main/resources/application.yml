@@ -5,7 +5,7 @@ micronaut:
     read-timeout: 120
   http:
     client:
-      read-timeout: 30s
+      read-timeout: 60s
   metrics:
     enabled: true
     sensitive: false
