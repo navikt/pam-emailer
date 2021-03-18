@@ -42,7 +42,7 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
     fun sendSimpleMessage(to: String, subject: String, contentType: MailContentType, content: String, id: String) {
         val email = Email(Message(subject, Body(contentType, content), listOf(Recipient(Address(to.trim())))))
         try {
-            sendMailUsingURLConnection(email, id)
+            sendMailUsingURLConnectionWithRetry(email, id)
 //            sendMail(email, id)
         } catch (e: Exception) {
             throw SendMailException(e.message,e)
@@ -75,7 +75,30 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
         }
     }
 
-    private fun sendMailUsingURLConnection(email: Email, id: String) {
+    private fun sendMailUsingURLConnectionWithRetry(email: Email, id: String) {
+        val maxRetries = 3
+
+        var tryNo = 0
+        var finished = false
+        while (!finished && tryNo < maxRetries) {
+            tryNo++
+            val responseCode = sendMailUsingURLConnection(email, id)
+
+            if (responseCode == 503 ||
+                    responseCode == 504 ||
+                    responseCode == 502) {
+                LOG.info("Failed email $id, wait and retry")
+                Thread.sleep(3000L)
+            } else {
+                finished = true
+            }
+        }
+        if (!finished) {
+            LOG.error("Fatal error for email $id. Gave up after $tryNo retries.")
+        }
+    }
+
+    private fun sendMailUsingURLConnection(email: Email, id: String) : Int {
         renewTokenIfExpired()
         val emailAsJson = objectMapper.writeValueAsString(email)
         val (responseCode, responseBody) = with(URL(sendEmailUri).openConnection() as HttpURLConnection) {
@@ -99,12 +122,13 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
         }
 
         if (responseCode >= 300 || responseBody == null) {
-            LOG.error("Got error $responseCode for $id")
+            LOG.error("Got error $responseCode for $id: $responseBody")
         } else {
             LOG.info("mail sent $id")
         }
-
+        return responseCode
     }
+
     private val aADToken: AADToken
         get() {
             val service = Executors.newSingleThreadExecutor()
