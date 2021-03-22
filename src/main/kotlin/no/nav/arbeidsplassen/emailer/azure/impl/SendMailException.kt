@@ -1,3 +1,7 @@
 package no.nav.arbeidsplassen.emailer.azure.impl
 
-class SendMailException(message: String?, e: Throwable) : Throwable(message,e)
+import io.micronaut.http.HttpStatus
+
+class SendMailException(message: String?,
+                        val status : HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
+                        e: Throwable? = null) : Throwable(message,e)

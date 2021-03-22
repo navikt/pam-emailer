@@ -17,7 +17,6 @@ class SendMailExceptionHandler : ExceptionHandler<SendMailException, HttpRespons
     }
     override fun handle(request: HttpRequest<*>, error: SendMailException): HttpResponse<String> {
         LOG.error("We got error while sending email", error)
-        return HttpResponse.serverError(error.message)
+        return HttpResponse.status(error.status, error.message)
     }
-
 }

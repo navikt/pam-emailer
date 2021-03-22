@@ -8,6 +8,7 @@ import com.microsoft.aad.adal4j.AuthenticationContext
 import com.microsoft.aad.adal4j.AuthenticationResult
 import com.microsoft.aad.adal4j.ClientCredential
 import io.micronaut.http.HttpRequest
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
@@ -44,8 +45,10 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
         try {
             sendMailUsingURLConnectionWithRetry(email, id)
 //            sendMail(email, id)
+        } catch (se: SendMailException) {
+            throw se
         } catch (e: Exception) {
-            throw SendMailException(e.message,e)
+            throw SendMailException(message = e.message, e = e)
         }
     }
 
@@ -89,6 +92,9 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
                     responseCode == 502) {
                 LOG.info("Failed email $id, wait and retry")
                 Thread.sleep(3000L)
+            } else if (responseCode == 400) {
+                LOG.error("Fatal error for email $id. God BAD_REQUEST, messege will not be retries.")
+                throw SendMailException(message = "Bad request for email $id", status = HttpStatus.BAD_REQUEST)
             } else {
                 finished = true
             }
