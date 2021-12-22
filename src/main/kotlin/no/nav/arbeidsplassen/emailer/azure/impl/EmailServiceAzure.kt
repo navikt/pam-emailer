@@ -10,27 +10,30 @@ import com.microsoft.aad.adal4j.ClientCredential
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
-import io.micronaut.http.client.RxHttpClient
+import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
+import jakarta.inject.Singleton
 import no.nav.arbeidsplassen.emailer.azure.dto.*
 import org.slf4j.LoggerFactory
+import reactor.core.publisher.Mono
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.concurrent.Executors
-import javax.inject.Singleton
+
 
 @Singleton
-class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("SendMail") val client: RxHttpClient) {
+class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("SendMail") val client: HttpClient) {
     private val sendEmailUri: String = aadProperties.resource + "/v1.0/users/" + aadProperties.userPrincipal + "/sendMail"
 
     companion object {
         private val LOG = LoggerFactory.getLogger(EmailServiceAzure::class.java)
     }
+
     private val objectMapper = ObjectMapper().apply {
-        registerModule(KotlinModule())
+        registerModule(KotlinModule.Builder().build())
         registerModule(JavaTimeModule())
         configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
@@ -61,7 +64,7 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
             .accept(MediaType.APPLICATION_JSON_TYPE)
         LOG.debug("sending mail using {}", aadProperties.resource)
         kotlin.runCatching {
-            client.exchange(postEmail, String::class.java).blockingFirst()
+            Mono.from(client.exchange(postEmail, String::class.java))
         }.onSuccess { LOG.info("mail sent $id")}.onFailure { LOG.error("Got error $id", it) }
     }
 
