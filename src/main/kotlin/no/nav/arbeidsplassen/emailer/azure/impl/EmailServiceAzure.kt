@@ -43,8 +43,8 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
     private var token: AADToken? = null
 
 
-    fun sendSimpleMessage(to: String, subject: String, contentType: MailContentType, content: String, id: String) {
-        val email = Email(Message(subject, Body(contentType, content), listOf(Recipient(Address(to.trim())))))
+    fun sendSimpleMessage(to: String, subject: String, contentType: MailContentType, content: String, id: String, attachments: List<Attachment> = listOf()) {
+        val email = Email(Message(subject, Body(contentType, content), listOf(Recipient(Address(to.trim()))), attachments))
         try {
             sendMailUsingURLConnectionWithRetry(email, id)
 //            sendMail(email, id)
