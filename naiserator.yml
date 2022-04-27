@@ -41,6 +41,7 @@ spec:
     inbound:
       rules:
         - application: pam-samtykke-api
+        - application: pam-moteplass-api
     outbound:
       external:
         - host: login.microsoftonline.com
