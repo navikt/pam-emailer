@@ -1,3 +1,3 @@
 {
-  "ingress": ["https://pam-emailer.prod-gcp.nais.io"]
+  "ingress": ["https://pam-emailer.intern.nav.no"]
 }

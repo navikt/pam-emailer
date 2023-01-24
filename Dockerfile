@@ -1,4 +1,4 @@
-FROM navikt/java:12
+FROM ghcr.io/navikt/baseimages/temurin:17
 USER root
 RUN apt-get update && apt-get install -y curl
 USER apprunner
