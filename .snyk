@@ -6,4 +6,8 @@ ignore:
     - '*':
         reason: old adal4j, need to replace the lib
         expires: 2025-07-08T06:14:39.494Z
+ SNYK-JAVA-NETMINIDEV-3369748:
+    - '*':
+        reason: app kan ikke nås fra utsiden
+        expires: 2025-07-08T06:14:39.494Z
 patch: {}
