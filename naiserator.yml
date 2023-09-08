@@ -43,6 +43,7 @@ spec:
         - application: pam-samtykke-api
         - application: pam-moteplass-api
         - application: pam-interesse-api
+        - application: pam-survey-api
     outbound:
       external:
         - host: login.microsoftonline.com
