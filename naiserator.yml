@@ -5,6 +5,8 @@ metadata:
   namespace: teampam
   labels:
     team: teampam
+  annotations:
+    config.linkerd.io/proxy-outbound-connect-timeout: "3s"
 spec:
   image: {{ image }}
   port: 8080
