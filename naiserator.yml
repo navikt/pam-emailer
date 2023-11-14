@@ -6,7 +6,7 @@ metadata:
   labels:
     team: teampam
   annotations:
-    config.linkerd.io/proxy-outbound-connect-timeout: 3000ms
+    config.linkerd.io/proxy-outbound-connect-timeout: 3500ms
 spec:
   image: {{ image }}
   port: 8080
