@@ -30,6 +30,8 @@ spec:
   vault:
     enabled: false
   webproxy: false
+  secureLogs:
+    enabled: true
   prometheus:
     enabled: true
     path: /prometheus
