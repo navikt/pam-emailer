@@ -30,6 +30,7 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
 
     companion object {
         private val LOG = LoggerFactory.getLogger(EmailServiceAzure::class.java)
+        private val SECURE_LOG = LoggerFactory.getLogger(EmailServiceAzure::class.java.name + ".secure")
     }
 
     private val objectMapper = ObjectMapper().apply {
@@ -131,7 +132,7 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
         }
 
         if (responseCode >= 300 || responseBody == null) {
-            LOG.error("Got error $responseCode for $id: $responseBody")
+            SECURE_LOG.error("Got error $responseCode for $id: $responseBody")
         } else {
             LOG.info("mail sent $id")
         }
