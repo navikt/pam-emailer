@@ -33,6 +33,7 @@ dependencies {
     implementation "io.micronaut:micronaut-http-server-netty"
     implementation "io.micronaut:micronaut-http-client"
     implementation "com.microsoft.azure:adal4j:$adal4jVersion"
+    implementation 'org.codehaus.janino:janino:3.1.10'
     kapt platform("io.micronaut:micronaut-bom:$micronautVersion")
     kapt "io.micronaut:micronaut-inject-java"
     kapt "io.micronaut:micronaut-validation"
