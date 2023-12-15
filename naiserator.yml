@@ -53,10 +53,6 @@ spec:
         - host: login.microsoftonline.com
           ports:
             - port: 443
-              name: https
-              protocol: HTTPS
         - host: graph.microsoft.com
           ports:
             - port: 443
-              name: https
-              protocol: HTTPS
