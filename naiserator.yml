@@ -48,6 +48,7 @@ spec:
         - application: pam-moteplass-api
         - application: pam-interesse-api
         - application: pam-survey-api
+        - application: pam-aduser
     outbound:
       external:
         - host: login.microsoftonline.com
