@@ -32,6 +32,11 @@ spec:
   webproxy: false
   secureLogs:
     enabled: true
+  observability:
+    logging:
+      destinations:
+        - id: loki
+        - id: elastic
   prometheus:
     enabled: true
     path: /prometheus
