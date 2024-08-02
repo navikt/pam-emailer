@@ -91,12 +91,13 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
             tryNo++
             val responseCode = sendMailUsingURLConnection(email, id)
 
-            if (responseCode == 503 ||
-                    responseCode == 504 ||
-                    responseCode == 502) {
+            if (responseCode == HttpStatus.SERVICE_UNAVAILABLE.code ||
+                responseCode == HttpStatus.GATEWAY_TIMEOUT.code ||
+                responseCode == HttpStatus.BAD_GATEWAY.code
+            ) {
                 LOG.info("Failed email $id, wait and retry")
                 Thread.sleep(3000L)
-            } else if (responseCode == 400) {
+            } else if (responseCode == HttpStatus.BAD_REQUEST.code) {
                 LOG.warn("Fatal error for email $id. Got BAD_REQUEST, messege will not be retried.")
                 throw SendMailException(message = "Bad request for email $id", status = HttpStatus.BAD_REQUEST)
             } else {
