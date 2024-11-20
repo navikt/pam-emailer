@@ -97,9 +97,10 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
             ) {
                 LOG.info("Failed email $id, wait and retry")
                 Thread.sleep(3000L)
-            } else if (responseCode == HttpStatus.BAD_REQUEST.code) {
-                LOG.warn("Fatal error for email $id. Got BAD_REQUEST, messege will not be retried.")
-                throw SendMailException(message = "Bad request for email $id", status = HttpStatus.BAD_REQUEST)
+            } else if (responseCode >= 400) {
+                val status = HttpStatus.valueOf(responseCode)
+                LOG.warn("Fatal error for email $id. Got $status, message will not be retried.")
+                throw SendMailException(message = "Bad request for email $id", status = status)
             } else {
                 finished = true
             }
