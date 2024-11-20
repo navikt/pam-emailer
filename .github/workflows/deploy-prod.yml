@@ -11,3 +11,4 @@ jobs:
       id-token: write
     with:
       NAIS_RESOURCE: .nais/naiserator.yml
+      NAIS_VARS: .nais/naiserator-prod.json

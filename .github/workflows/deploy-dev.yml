@@ -19,5 +19,6 @@ jobs:
     with:
       JAVA_VERSION: 17
       NAIS_RESOURCE: .nais/naiserator.yml
+      NAIS_VARS: .nais/naiserator-dev.json
     secrets:
       NAIS_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
