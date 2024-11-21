@@ -1,9 +1,9 @@
 package no.nav.arbeidsplassen.emailer.azure.impl
 
-import io.micronaut.http.HttpStatus
 import org.junit.jupiter.api.Test
 
 import org.junit.jupiter.api.Assertions.*
+import org.springframework.http.HttpStatus
 
 class SendMailExceptionTest {
 

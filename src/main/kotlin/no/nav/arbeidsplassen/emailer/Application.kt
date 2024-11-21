@@ -1,14 +1,13 @@
 package no.nav.arbeidsplassen.emailer
 
-import io.micronaut.runtime.Micronaut
+import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan
+import org.springframework.boot.runApplication
 
-object Application {
+@SpringBootApplication
+@ConfigurationPropertiesScan("no.nav.arbeidsplassen.emailer")
+class Application
 
-    @JvmStatic
-    fun main(args: Array<String>) {
-        Micronaut.build()
-            .packages("no.nav.arbeidsplassen.emailer")
-            .mainClass(Application.javaClass)
-            .start()
-    }
+fun main(args: Array<String>) {
+    runApplication<Application>(*args)
 }

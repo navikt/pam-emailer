@@ -1,25 +1,18 @@
 package no.nav.arbeidsplassen.emailer.internal
 
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.MediaType
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Get
-import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
-@Controller("/internal")
+@RestController
+@RequestMapping("/internal")
 class StatusController {
 
-    companion object {
-        private val LOG = LoggerFactory.getLogger(StatusController::class.java)
-    }
+    @GetMapping("/isReady")
+    fun isReady() = HttpStatus.OK
 
-    @Get("/isReady", produces = [MediaType.TEXT_PLAIN])
-    fun isReady(): HttpResponse<String> {
-        return HttpResponse.ok("OK")
-    }
+    @GetMapping("/isAlive")
+    fun isAlive() = HttpStatus.OK
 
-    @Get("/isAlive",produces = [MediaType.TEXT_PLAIN])
-    fun isAlive(): HttpResponse<String> {
-        return HttpResponse.ok("Alive")
-    }
 }
