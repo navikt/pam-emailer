@@ -1,6 +1,6 @@
 package no.nav.arbeidsplassen.emailer.azure.impl
 
-import io.micronaut.http.HttpStatus
+import org.springframework.http.HttpStatus
 
 class SendMailException(
     message: String?,
@@ -8,7 +8,7 @@ class SendMailException(
     e: Throwable? = null
 ) : Throwable(message, e) {
     override fun toString(): String {
-        return "${super.toString()}, status code: ${status.code} ($status)"
+        return "${super.toString()}, status code: ${status.value()} ($status)"
     }
 }
 

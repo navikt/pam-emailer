@@ -7,30 +7,38 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.microsoft.aad.adal4j.AuthenticationContext
 import com.microsoft.aad.adal4j.AuthenticationResult
 import com.microsoft.aad.adal4j.ClientCredential
-import io.micronaut.http.HttpRequest
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.MediaType
-import io.micronaut.http.client.HttpClient
-import io.micronaut.http.client.annotation.Client
-import jakarta.inject.Singleton
-import no.nav.arbeidsplassen.emailer.azure.dto.*
+import no.nav.arbeidsplassen.emailer.azure.dto.Address
+import no.nav.arbeidsplassen.emailer.azure.dto.Attachment
+import no.nav.arbeidsplassen.emailer.azure.dto.Body
+import no.nav.arbeidsplassen.emailer.azure.dto.Email
+import no.nav.arbeidsplassen.emailer.azure.dto.MailContentType
+import no.nav.arbeidsplassen.emailer.azure.dto.Message
+import no.nav.arbeidsplassen.emailer.azure.dto.Recipient
 import org.slf4j.LoggerFactory
-import reactor.core.publisher.Mono
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
+import org.springframework.stereotype.Service
 import java.io.InputStream
 import java.net.HttpURLConnection
+import java.net.URI
 import java.net.URL
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.concurrent.Executors
 
 
-@Singleton
-class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("SendMail") val client: HttpClient) {
+@Service
+class EmailServiceAzure(private val aadProperties: AzureADProperties) {
     private val sendEmailUri: String = aadProperties.resource + "/v1.0/users/" + aadProperties.userPrincipal + "/sendMail"
 
     companion object {
         private val LOG = LoggerFactory.getLogger(EmailServiceAzure::class.java)
         private val SECURE_LOG = LoggerFactory.getLogger(EmailServiceAzure::class.java.name + ".secure")
+        private val client = HttpClient.newHttpClient()
     }
 
     private val objectMapper = ObjectMapper().apply {
@@ -58,14 +66,18 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
 
     private fun sendMail(email: Email, id: String) {
         renewTokenIfExpired()
-        val postEmail = HttpRequest.POST(
-            sendEmailUri,
-            email).bearerAuth(token!!.accessToken)
-            .contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON_TYPE)
+        val postEmail = HttpRequest.newBuilder()
+            .uri(URI(sendEmailUri))
+            .timeout(Duration.ofSeconds(10))
+            .header("Authorization", "Bearer ${token!!.accessToken}")
+            .header("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+            .header("Accept", MediaType.APPLICATION_JSON_VALUE)
+            .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(email)))
+            .build();
+
         LOG.debug("sending mail using {}", aadProperties.resource)
         kotlin.runCatching {
-            Mono.from(client.exchange(postEmail, String::class.java))
+            client.send(postEmail, HttpResponse.BodyHandlers.ofString())
         }.onSuccess { LOG.info("mail sent $id")}.onFailure { LOG.error("Got error $id", it) }
     }
 
@@ -91,9 +103,9 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
             tryNo++
             val responseCode = sendMailUsingURLConnection(email, id)
 
-            if (responseCode == HttpStatus.SERVICE_UNAVAILABLE.code ||
-                responseCode == HttpStatus.GATEWAY_TIMEOUT.code ||
-                responseCode == HttpStatus.BAD_GATEWAY.code
+            if (responseCode == HttpStatus.SERVICE_UNAVAILABLE.value() ||
+                responseCode == HttpStatus.GATEWAY_TIMEOUT.value() ||
+                responseCode == HttpStatus.BAD_GATEWAY.value()
             ) {
                 LOG.info("Failed email $id, wait and retry")
                 Thread.sleep(3000L)
@@ -120,8 +132,8 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties, @Client("S
             useCaches = false
 
             setRequestProperty("Authorization", "Bearer ${token!!.accessToken}")
-            setRequestProperty("Content-Type", MediaType.APPLICATION_JSON)
-            setRequestProperty("Accept", MediaType.APPLICATION_JSON)
+            setRequestProperty("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+            setRequestProperty("Accept", MediaType.APPLICATION_JSON_VALUE)
             doOutput = true
 
             outputStream.writer(Charsets.UTF_8).apply {

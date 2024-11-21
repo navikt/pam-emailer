@@ -1,32 +1,39 @@
 package no.nav.arbeidsplassen.emailer.api.v1
 
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Post
-import io.micronaut.scheduling.TaskExecutors
-import io.micronaut.scheduling.annotation.ExecuteOn
 import no.nav.arbeidsplassen.emailer.azure.dto.Attachment
 import no.nav.arbeidsplassen.emailer.azure.dto.MailContentType
 import no.nav.arbeidsplassen.emailer.azure.impl.EmailServiceAzure
+import no.nav.arbeidsplassen.emailer.azure.impl.SendMailException
 import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RestController
 import java.util.*
 
-@Controller("/api/v1/sendmail")
+@RestController("/api/v1/sendmail")
 class SendMailController(private val emailServiceAzure: EmailServiceAzure) {
 
     companion object {
         private val LOG = LoggerFactory.getLogger(SendMailController::class.java)
     }
 
-    @Post
-    @ExecuteOn(TaskExecutors.IO)
-    fun sendMail(@Body email: EmailDTO): HttpResponse<String> {
+    @PostMapping
+    fun sendMail(@RequestBody email: EmailDTO): ResponseEntity<Void> {
         val id = email.identifier ?: UUID.randomUUID().toString()
-        LOG.info("Got email request with id: ${id}")
+        LOG.info("Got email request with id: $id")
         val attachments = email.attachments.map { Attachment(it.name, it.contentType, it.base64Content) }
         emailServiceAzure.sendSimpleMessage(email.recipient, email.subject,
             MailContentType.valueOf(email.type),email.content, id, attachments)
-        return HttpResponse.created("Created")
+        return ResponseEntity.status(HttpStatus.CREATED).build()
+    }
+
+    @ExceptionHandler(SendMailException::class)
+    fun handleSendMailException(exception: SendMailException): ResponseEntity<String> {
+        LOG.error("We got error while sending email", exception)
+
+        return ResponseEntity.status(exception.status).body(exception.message)
     }
 }

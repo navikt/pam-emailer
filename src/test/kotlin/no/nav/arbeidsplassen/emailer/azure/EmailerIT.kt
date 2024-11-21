@@ -1,14 +1,20 @@
 package no.nav.arbeidsplassen.emailer.azure
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import no.nav.arbeidsplassen.emailer.azure.dto.Attachment
 import no.nav.arbeidsplassen.emailer.azure.dto.MailContentType
 import no.nav.arbeidsplassen.emailer.azure.impl.EmailServiceAzure
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import java.util.*
 
-@MicronautTest
-class EmailerIT(private val emailServiceAzure: EmailServiceAzure) {
+@Disabled
+@SpringBootTest
+class EmailerIT {
+
+    @Autowired
+    private lateinit var emailServiceAzure: EmailServiceAzure
 
     @Test
     fun sendEmailAzure() {

@@ -1,29 +1,10 @@
-micronaut:
+spring:
   application:
     name: pam-emailer
-  server:
-    read-timeout: 120
-  http:
-    client:
-      read-timeout: 60s
-  metrics:
-    enabled: true
-    sensitive: false
-    binders:
-      jvm:
-        enabled: true
-    export:
-      prometheus:
-        enabled: true
-        descriptions: false
-endpoints:
-  metrics:
-    enabled: true
-  prometheus:
-    sensitive: false
 
-jackson:
-  bean-introspection-module: true
-  serialization:
-    indentOutput: true
-
+management:
+  endpoints.web.exposure.include: prometheus
+  endpoint:
+    prometheus.enabled: true
+    metrics.enabled: true
+  prometheus.metrics.export.enabled: true
