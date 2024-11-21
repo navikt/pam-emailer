@@ -9,7 +9,7 @@ spec:
   groups:
     - name: "teampam pam-emailer alerts"
       rules:
-        - alert: "Mye feil i loggene"
+        - alert: "[pam-emailer] Mye feil i loggene"
           expr: (100 * sum(rate(log_messages_errors{app="pam-emailer"}[3m])) / sum(rate(log_messages_total{app="pam-emailer"}[3m]))) > 1
           for: 3m
           annotations:
