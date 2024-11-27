@@ -1,7 +1,5 @@
 package no.nav.arbeidsplassen.emailer.api.v1
 
-import no.nav.arbeidsplassen.emailer.azure.dto.Attachment
-import no.nav.arbeidsplassen.emailer.azure.dto.MailContentType
 import no.nav.arbeidsplassen.emailer.azure.impl.EmailServiceAzure
 import no.nav.arbeidsplassen.emailer.azure.impl.SendMailException
 import org.slf4j.LoggerFactory
@@ -22,13 +20,19 @@ class SendMailController(private val emailServiceAzure: EmailServiceAzure) {
         private val LOG = LoggerFactory.getLogger(SendMailController::class.java)
     }
 
-    @PostMapping
+    @PostMapping("/")
     fun sendMail(@RequestBody email: EmailDTO): ResponseEntity<Void> {
-        val id = email.identifier ?: UUID.randomUUID().toString()
-        LOG.info("Got email request with id: $id")
-        val attachments = email.attachments.map { Attachment(it.name, it.contentType, it.base64Content) }
-        emailServiceAzure.sendSimpleMessage(email.recipient, email.subject,
-            MailContentType.valueOf(email.type),email.content, id, attachments)
+        val id = if (email.identifier == null) {
+            val identifier = UUID.randomUUID().toString()
+            LOG.info("Got email request without identifier, adding new identifier: $identifier")
+            identifier
+        } else {
+            LOG.info("Got email request with identifier: ${email.identifier}")
+            email.identifier
+        }
+
+        emailServiceAzure.sendMail(email, id)
+
         return ResponseEntity.status(HttpStatus.CREATED).build()
     }
 
