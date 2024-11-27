@@ -1,6 +1,8 @@
 package no.nav.arbeidsplassen.emailer.azure.impl
 
 import com.azure.identity.ClientSecretCredentialBuilder
+import com.microsoft.graph.core.authentication.AzureIdentityAuthenticationProvider
+import com.microsoft.graph.core.requests.GraphClientFactory
 import com.microsoft.graph.models.BodyType
 import com.microsoft.graph.models.EmailAddress
 import com.microsoft.graph.models.FileAttachment
@@ -14,6 +16,8 @@ import no.nav.arbeidsplassen.emailer.api.v1.EmailDTO
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import java.time.Duration
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 
@@ -24,13 +28,21 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties) {
         private val SECURE_LOG = LoggerFactory.getLogger(EmailServiceAzure::class.java.name + ".secure")
     }
 
-    private val graphClient = GraphServiceClient(
-        ClientSecretCredentialBuilder()
-            .clientId(aadProperties.clientId)
-            .clientSecret(aadProperties.clientSecret)
-            .tenantId(aadProperties.tenantId)
-            .build(),
-        "https://graph.microsoft.com/.default")
+    private final val graphClient = GraphServiceClient(
+        AzureIdentityAuthenticationProvider(
+            ClientSecretCredentialBuilder()
+                .clientId(aadProperties.clientId)
+                .clientSecret(aadProperties.clientSecret)
+                .tenantId(aadProperties.tenantId)
+                .build(),
+            arrayOf<String>(),
+            "https://graph.microsoft.com/.default"
+        ),
+        GraphClientFactory.create()
+            .connectTimeout(Duration.of(20, ChronoUnit.SECONDS))
+            .readTimeout(Duration.of(60, ChronoUnit.SECONDS))
+            .build()
+    )
 
     fun sendMail(emailDto: EmailDTO, id: String) {
         val message = Message().apply {
