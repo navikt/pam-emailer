@@ -2,7 +2,7 @@ package no.nav.arbeidsplassen.emailer.azure
 
 import no.nav.arbeidsplassen.emailer.api.v1.AttachmentDto
 import no.nav.arbeidsplassen.emailer.api.v1.EmailDTO
-import no.nav.arbeidsplassen.emailer.azure.impl.EmailServiceAzure
+import no.nav.arbeidsplassen.emailer.api.v1.SendMailController
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,7 +14,7 @@ import java.util.*
 class EmailerIT {
 
     @Autowired
-    private lateinit var emailServiceAzure: EmailServiceAzure
+    private lateinit var sendMailController: SendMailController
 
     @Test
     fun sendEmailAzure() {
@@ -26,7 +26,7 @@ class EmailerIT {
             type = "TEXT"
         )
 
-        emailServiceAzure.sendMail(email, "hei hei")
+        sendMailController.sendMail(email)
     }
 
     @Test
@@ -40,6 +40,6 @@ class EmailerIT {
             attachments = listOf(AttachmentDto("test.txt", "plain/text", Base64.getEncoder().encodeToString("Hei!".encodeToByteArray())))
         )
 
-        emailServiceAzure.sendMail(email, "hei hei")
+        sendMailController.sendMail(email)
     }
 }
