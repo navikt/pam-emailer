@@ -12,13 +12,12 @@ import com.microsoft.graph.models.Recipient
 import com.microsoft.graph.models.odataerrors.ODataError
 import com.microsoft.graph.serviceclient.GraphServiceClient
 import com.microsoft.graph.users.item.sendmail.SendMailPostRequestBody
-import no.nav.arbeidsplassen.emailer.api.v1.EmailDTO
+import no.nav.arbeidsplassen.emailer.sendmail.Email
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.temporal.ChronoUnit
-import java.util.*
 
 
 @Service
@@ -44,27 +43,27 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties) {
             .build()
     )
 
-    fun sendMail(emailDto: EmailDTO, id: String) {
+    fun sendMail(email: Email, id: String) {
         val message = Message().apply {
-            subject = emailDto.subject
+            subject = email.subject
             body = ItemBody().apply {
-                contentType = BodyType.forValue(emailDto.type.lowercase())
-                content = emailDto.content
+                contentType = BodyType.forValue(email.type.lowercase())
+                content = email.content
             }
-            toRecipients = listOf(Recipient().apply { emailAddress = EmailAddress().apply { address = emailDto.recipient.trim() } })
-            attachments = emailDto.attachments.map { FileAttachment().apply {
+            toRecipients = listOf(Recipient().apply { emailAddress = EmailAddress().apply { address = email.recipient.trim() } })
+            attachments = email.attachments.map { FileAttachment().apply {
                 name = it.name
                 contentType = it.contentType
-                contentBytes = Base64.getDecoder().decode(it.base64Content.encodeToByteArray())
+                contentBytes = it.content.toByteArray()
             } }
         }
-        val email = SendMailPostRequestBody().apply {
+        val emailRequestBody = SendMailPostRequestBody().apply {
             this.message = message
             saveToSentItems = false
         }
 
         try {
-            sendMailWithRetry(email, id)
+            sendMailWithRetry(emailRequestBody, id)
         } catch (e: SendMailException) {
             throw e
         } catch (e: Exception) {
