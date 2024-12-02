@@ -46,6 +46,7 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    testImplementation("io.mockk:mockk:1.13.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
