@@ -42,4 +42,27 @@ class OutboxEmailRepositoryTest : PostgresTestDatabase() {
         assertEquals(email.retries, storedEmail.retries)
         assertEquals(email.payload, storedEmail.payload)
     }
+
+    @Test
+    fun `Only sent e-mails in the last hours count as sent`() {
+        val pendingEmail = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload")
+        val sentEmailInLastHour = pendingEmail.copy(id = UUID.randomUUID(), status = Status.SENT, updatedAt = OffsetDateTime.now().minusMinutes(45))
+
+        outboxEmailRepository.create(pendingEmail)
+        outboxEmailRepository.create(sentEmailInLastHour)
+
+        val emailsSentInLastHour = outboxEmailRepository.countEmailsSentInLastHour()
+
+        assertEquals(1, emailsSentInLastHour)
+
+        val sentEmailMoreThanAnHourAgo = pendingEmail.copy(id = UUID.randomUUID(), status = Status.SENT, updatedAt = OffsetDateTime.now().minusMinutes(65))
+        val failedEmail = pendingEmail.copy(id = UUID.randomUUID(), status = Status.FAILED, updatedAt = OffsetDateTime.now().minusMinutes(45))
+
+        outboxEmailRepository.create(sentEmailMoreThanAnHourAgo)
+        outboxEmailRepository.create(failedEmail)
+
+        val emailsSentInLastHour2 = outboxEmailRepository.countEmailsSentInLastHour()
+
+        assertEquals(1, emailsSentInLastHour2)
+    }
 }
