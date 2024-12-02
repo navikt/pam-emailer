@@ -7,12 +7,12 @@ import java.util.*
 data class OutboxEmail(
     val id: UUID,
     val emailId: String,
-    val status: Status,
-    val priority: Priority,
+    var status: Status,
+    var priority: Priority,
     val createdAt: OffsetDateTime,
-    val updatedAt: OffsetDateTime,
-    val retries: Int,
-    val payload: String
+    var updatedAt: OffsetDateTime,
+    var retries: Int,
+    var payload: String
 ) {
     companion object {
         fun newOutboxEmail(emailId: String, priority: Priority, payload: String): OutboxEmail {
@@ -28,6 +28,18 @@ data class OutboxEmail(
                 payload = payload
             )
         }
+    }
+
+    fun successfullySent() {
+        status = Status.SENT
+        updatedAt = OffsetDateTime.now()
+        payload = ""
+    }
+
+    fun failedToSend() {
+        status = Status.FAILED
+        updatedAt = OffsetDateTime.now()
+        retries++
     }
 }
 
