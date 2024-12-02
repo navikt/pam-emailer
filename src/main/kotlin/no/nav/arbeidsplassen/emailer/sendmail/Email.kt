@@ -14,7 +14,11 @@ data class Attachment(
     val content: String
 )
 
-enum class Priority(priority: Int) {
+enum class Priority(val value: Int) {
     HIGH(10),
-    NORMAL(5)
+    NORMAL(5);
+
+    companion object {
+        fun fromValue(value: Int) = entries.first { it.value == value }
+    }
 }

@@ -2,6 +2,11 @@ spring:
   application:
     name: pam-emailer
 
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:}:${DB_PORT:}/${DB_DATABASE:}
+    username: ${DB_USERNAME:}
+    password: ${DB_PASSWORD:}
+
 management:
   endpoints.web.exposure.include: prometheus
   endpoint:

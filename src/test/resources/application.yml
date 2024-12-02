@@ -1,0 +1,8 @@
+azure:
+  ad:
+    tenantId: "test"
+    authority: "test"
+    clientId: "test"
+    clientSecret: "test"
+    resource: "test"
+    userPrincipal: "test"
