@@ -69,5 +69,48 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
         }
     }
 
+    fun update(outboxEmail: OutboxEmail) {
+        val sql = """
+            UPDATE outbox_email
+            SET
+                email_id = :email_id,
+                status = :status,
+                priority = :priority,
+                created_at = :created_at,
+                updated_at = :updated_at,
+                retries = :retries,
+                payload = :payload
+            WHERE id = :id
+        """.trimIndent()
+
+        val params = MapSqlParameterSource()
+            .addValue("id", outboxEmail.id)
+            .addValue("email_id", outboxEmail.emailId)
+            .addValue("status", outboxEmail.status.toString())
+            .addValue("priority", outboxEmail.priority.value)
+            .addValue("created_at", outboxEmail.createdAt)
+            .addValue("updated_at", outboxEmail.updatedAt)
+            .addValue("retries", outboxEmail.retries)
+            .addValue("payload", outboxEmail.payload)
+
+        jdbcTemplate.update(sql, params)
+    }
+
+    fun countEmailsSentInLastHour(): Int {
+        val oneHourAgo = OffsetDateTime.now().minusHours(1)
+        var sql = """
+            SELECT count(*)
+            FROM outbox_email
+            WHERE updated_at > :one_hour_ago
+                AND status = :sent_status
+        """.trimIndent()
+
+        val params = MapSqlParameterSource()
+            .addValue("one_hour_ago", oneHourAgo)
+            .addValue("sent_status", Status.SENT.toString())
+
+        return jdbcTemplate.queryForObject(sql, params, Int::class.java)!!
+    }
+
 }
 
