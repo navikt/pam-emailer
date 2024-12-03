@@ -6,19 +6,23 @@ on:
       - ".gitignore"
       - "LICENCE"
       - "CODEOWNERS"
+      - ".nais/alerts.yaml"
+      - ".github/workflows/alerts.yml"
     branches:
-      - main
+      - '**'
 jobs:
   call-workflow:
-    uses: navikt/pam-deploy/.github/workflows/deploy-dev.yml@v7
     permissions:
       actions: read
       contents: write
       security-events: write
       id-token: write
+    if: "(github.ref_name == 'main') || contains(github.event.head_commit.message, 'deploy:dev')"
+    uses: navikt/pam-deploy/.github/workflows/deploy-dev.yml@v7
     with:
-      JAVA_VERSION: 17
+      JAVA_VERSION: 21
       NAIS_RESOURCE: .nais/naiserator.yml
       NAIS_VARS: .nais/naiserator-dev.json
+      SKIP_DRAFT_RELEASE: ${{ github.ref_name != 'main' }}
     secrets:
       NAIS_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
