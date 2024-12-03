@@ -20,7 +20,7 @@ class SendMailController(private val emailServiceAzure: EmailServiceAzure) {
         private val LOG = LoggerFactory.getLogger(SendMailController::class.java)
     }
 
-    @PostMapping("/")
+    @PostMapping("/", "")
     fun sendMail(@RequestBody email: EmailDTO): ResponseEntity<Void> {
         val id = if (email.identifier == null) {
             val identifier = UUID.randomUUID().toString()
