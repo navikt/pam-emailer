@@ -65,4 +65,51 @@ class OutboxEmailRepositoryTest : PostgresTestDatabase() {
 
         assertEquals(1, emailsSentInLastHour2)
     }
+
+    @Test
+    fun `Pending emails are returned with oldest first from find pending`() {
+        val pendingEmail = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload")
+        val pendingEmailOlder = pendingEmail.copy(id = UUID.randomUUID(), createdAt = OffsetDateTime.now().minusHours(1))
+        val pendingEmailOldest = pendingEmail.copy(id = UUID.randomUUID(), createdAt = OffsetDateTime.now().minusHours(2))
+        val sentEmail = pendingEmail.copy(id = UUID.randomUUID(), status = Status.SENT)
+        val failedEmail = pendingEmail.copy(id = UUID.randomUUID(), status = Status.FAILED)
+
+        outboxEmailRepository.create(pendingEmail)
+        outboxEmailRepository.create(pendingEmailOlder)
+        outboxEmailRepository.create(pendingEmailOldest)
+        outboxEmailRepository.create(sentEmail)
+        outboxEmailRepository.create(failedEmail)
+
+        val pendingEmails = outboxEmailRepository.findPendingSortedByCreated(2)
+
+        assertThat(pendingEmails)
+            .extracting("id")
+            .contains(pendingEmailOlder.id, pendingEmailOldest.id)
+
+        assertThat(pendingEmails)
+            .extracting("id")
+            .doesNotContain(pendingEmail.id, sentEmail.id, failedEmail.id)
+    }
+
+    @Test
+    fun `Failed emails are returned with oldest first from find failed`() {
+        val pendingEmail = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload")
+        val failedEmail = pendingEmail.copy(id = UUID.randomUUID(), status = Status.FAILED, updatedAt = OffsetDateTime.now().minusMinutes(10))
+        val failedEmailOlder = pendingEmail.copy(id = UUID.randomUUID(), status = Status.FAILED, updatedAt = OffsetDateTime.now().minusMinutes(20))
+        val failedEmailOldest = pendingEmail.copy(id = UUID.randomUUID(), status = Status.FAILED, updatedAt = OffsetDateTime.now().minusMinutes(30))
+        val sentEmail = pendingEmail.copy(id = UUID.randomUUID(), status = Status.SENT)
+
+        outboxEmailRepository.create(pendingEmail)
+        outboxEmailRepository.create(failedEmail)
+        outboxEmailRepository.create(failedEmailOlder)
+        outboxEmailRepository.create(failedEmailOldest)
+        outboxEmailRepository.create(sentEmail)
+
+        val failedEmails = outboxEmailRepository.findFailedSortedByUpdated(2)
+
+        assertEquals(2, failedEmails.size)
+
+        assertEquals(failedEmailOldest.id, failedEmails[0].id)
+        assertEquals(failedEmailOlder.id, failedEmails[1].id)
+    }
 }

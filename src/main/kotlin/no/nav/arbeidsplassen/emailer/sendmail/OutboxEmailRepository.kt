@@ -1,6 +1,7 @@
 package no.nav.arbeidsplassen.emailer.sendmail
 
-import org.springframework.jdbc.core.JdbcTemplate
+import no.nav.arbeidsplassen.emailer.sendmail.LimitHandler.Companion.MAX_RETRIES
+import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
@@ -10,6 +11,18 @@ import java.util.*
 
 @Repository
 class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
+    private val rowMapper = RowMapper<OutboxEmail> { rs, _ ->
+        OutboxEmail(
+            id = rs.getObject("id", UUID::class.java),
+            emailId = rs.getString("email_id"),
+            status = Status.valueOf(rs.getString("status")),
+            priority = Priority.fromValue(rs.getInt("priority")),
+            createdAt = rs.getObject("created_at", OffsetDateTime::class.java),
+            updatedAt = rs.getObject("updated_at", OffsetDateTime::class.java),
+            retries = rs.getInt("retries"),
+            payload = rs.getString("payload")
+        )
+    }
 
     fun create(outboxEmail: OutboxEmail) {
         val sql = """
@@ -55,18 +68,41 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
         """.trimIndent()
         val params = MapSqlParameterSource("id", id)
 
-        return jdbcTemplate.queryForObject(sql, params) { rs, _ ->
-            OutboxEmail(
-                id = rs.getObject("id", UUID::class.java),
-                emailId = rs.getString("email_id"),
-                status = Status.valueOf(rs.getString("status")),
-                priority = Priority.fromValue(rs.getInt("priority")),
-                createdAt = rs.getObject("created_at", OffsetDateTime::class.java),
-                updatedAt = rs.getObject("updated_at", OffsetDateTime::class.java),
-                retries = rs.getInt("retries"),
-                payload = rs.getString("payload")
-            )
-        }
+        return jdbcTemplate.queryForObject(sql, params, rowMapper)
+    }
+
+    fun findPendingSortedByCreated(limit: Int): List<OutboxEmail> {
+        val sql = """
+            SELECT *
+            FROM outbox_email
+            WHERE status = :pending_status
+            ORDER BY created_at
+            LIMIT :limit
+        """.trimIndent()
+
+        val params = MapSqlParameterSource()
+            .addValue("pending_status", Status.PENDING.toString())
+            .addValue("limit", limit)
+
+        return jdbcTemplate.query(sql, params, rowMapper)
+    }
+
+    fun findFailedSortedByUpdated(limit: Int): List<OutboxEmail> {
+        val sql = """
+            SELECT *
+            FROM outbox_email
+            WHERE status = :failed_status
+             AND retries < :max_retries
+            ORDER BY updated_at
+            LIMIT :limit
+        """.trimIndent()
+
+        val params = MapSqlParameterSource()
+            .addValue("failed_status", Status.FAILED.toString())
+            .addValue("max_retries", MAX_RETRIES)
+            .addValue("limit", limit)
+
+        return jdbcTemplate.query(sql, params, rowMapper)
     }
 
     fun update(outboxEmail: OutboxEmail) {
@@ -98,7 +134,7 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
 
     fun countEmailsSentInLastHour(): Int {
         val oneHourAgo = OffsetDateTime.now().minusHours(1)
-        var sql = """
+        val sql = """
             SELECT count(*)
             FROM outbox_email
             WHERE updated_at > :one_hour_ago
