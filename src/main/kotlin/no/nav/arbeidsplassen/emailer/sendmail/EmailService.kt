@@ -11,9 +11,9 @@ import org.springframework.transaction.annotation.Transactional
 class EmailService(
     private val emailRepository: OutboxEmailRepository,
     private val emailServiceAzure: EmailServiceAzure,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    private val limitHandler: LimitHandler,
 ) {
-    private val limitHandler = LimitHandler(emailRepository)
 
     @Transactional
     fun sendNewEmail(email: Email, emailId: String, priority: Priority) {
@@ -43,5 +43,4 @@ class EmailService(
 
         emailRepository.update(outboxEmail)
     }
-
 }
