@@ -7,6 +7,7 @@ import kotlin.math.min
 class LimitHandler(private val emailRepository: OutboxEmailRepository) {
     companion object {
         const val MAX_EMAILS_PER_HOUR = 2_850   // Actually 3000, but use a 5 % buffer to avoid hitting the limit
+        const val HIGH_PRIORITY_EMAIL_BUFFER = 200
 
         // 10 every 10 seconds = max 3600 per hour
         const val PENDING_EMAIL_BATCH_SIZE = 10
@@ -22,9 +23,13 @@ class LimitHandler(private val emailRepository: OutboxEmailRepository) {
         const val MAX_RETRIES = 15
     }
 
-    fun canSendEmailNow(): Boolean {
+    fun canSendEmailNow(outboxEmail: OutboxEmail): Boolean {
         val emailsSentInLastHour = emailRepository.countEmailsSentInLastHour()
-        return emailsSentInLastHour < MAX_EMAILS_PER_HOUR
+
+        return when (outboxEmail.priority) {
+            Priority.HIGH -> emailsSentInLastHour < MAX_EMAILS_PER_HOUR
+            Priority.NORMAL -> emailsSentInLastHour < MAX_EMAILS_PER_HOUR - HIGH_PRIORITY_EMAIL_BUFFER
+        }
     }
 
     fun emailsToSend(): Int {

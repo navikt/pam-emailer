@@ -2,6 +2,7 @@ package no.nav.arbeidsplassen.emailer.sendmail
 
 import io.mockk.every
 import io.mockk.mockk
+import no.nav.arbeidsplassen.emailer.sendmail.LimitHandler.Companion.HIGH_PRIORITY_EMAIL_BUFFER
 import no.nav.arbeidsplassen.emailer.sendmail.LimitHandler.Companion.MAX_EMAILS_PER_HOUR
 import no.nav.arbeidsplassen.emailer.sendmail.LimitHandler.Companion.PENDING_EMAIL_BATCH_SIZE
 import no.nav.arbeidsplassen.emailer.sendmail.LimitHandler.Companion.RETRY_EMAIL_BATCH_SIZE
@@ -19,14 +20,40 @@ class LimitHandlerTest {
     fun `Can send emails when not hitting limit`() {
         every { emailRepository.countEmailsSentInLastHour() } returns 0
 
-        assertTrue(limitHandler.canSendEmailNow())
+        val normalPriorityEmail = OutboxEmail.newOutboxEmail("email-id", Priority.NORMAL, "payload")
+        val highPriorityEmail = OutboxEmail.newOutboxEmail("email-id", Priority.HIGH, "payload")
+
+        assertTrue(limitHandler.canSendEmailNow(normalPriorityEmail))
+        assertTrue(limitHandler.canSendEmailNow(highPriorityEmail))
     }
 
     @Test
     fun `Can not send emails when limit is hit`() {
         every { emailRepository.countEmailsSentInLastHour() } returns MAX_EMAILS_PER_HOUR + 1
 
-        assertFalse(limitHandler.canSendEmailNow())
+        val normalPriorityEmail = OutboxEmail.newOutboxEmail("email-id", Priority.NORMAL, "payload")
+        val highPriorityEmail = OutboxEmail.newOutboxEmail("email-id", Priority.HIGH, "payload")
+
+        assertFalse(limitHandler.canSendEmailNow(normalPriorityEmail))
+        assertFalse(limitHandler.canSendEmailNow(highPriorityEmail))
+    }
+
+    @Test
+    fun `Can not send NORMAL priority emails when NORMAL limit is hit`() {
+        every { emailRepository.countEmailsSentInLastHour() } returns MAX_EMAILS_PER_HOUR - HIGH_PRIORITY_EMAIL_BUFFER + 1
+
+        val normalPriorityEmail = OutboxEmail.newOutboxEmail("email-id", Priority.NORMAL, "payload")
+
+        assertFalse(limitHandler.canSendEmailNow(normalPriorityEmail))
+    }
+
+    @Test
+    fun `Can send HIGH priority emails when NORMAL limit is hit`() {
+        every { emailRepository.countEmailsSentInLastHour() } returns MAX_EMAILS_PER_HOUR - HIGH_PRIORITY_EMAIL_BUFFER + 1
+
+        val highPriorityEmail = OutboxEmail.newOutboxEmail("email-id", Priority.HIGH, "payload")
+
+        assertTrue(limitHandler.canSendEmailNow(highPriorityEmail))
     }
 
     @Test

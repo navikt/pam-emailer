@@ -24,7 +24,7 @@ class EmailService(
     fun sendNewEmail(email: Email, emailId: String, priority: Priority) {
         val outboxEmail = OutboxEmail.newOutboxEmail(emailId, priority, objectMapper.writeValueAsString(email))
 
-        if (limitHandler.canSendEmailNow()) {
+        if (limitHandler.canSendEmailNow(outboxEmail)) {
             try {
                 LOG.info("Sending email with id $emailId immediately")
 
