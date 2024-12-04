@@ -3,6 +3,8 @@ package no.nav.arbeidsplassen.emailer.sendmail
 import com.fasterxml.jackson.databind.ObjectMapper
 import no.nav.arbeidsplassen.emailer.azure.impl.EmailServiceAzure
 import no.nav.arbeidsplassen.emailer.azure.impl.SendMailException
+import no.nav.arbeidsplassen.emailer.sendmail.LimitHandler.Companion.MAX_RETRIES
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -14,6 +16,9 @@ class EmailService(
     private val objectMapper: ObjectMapper,
     private val limitHandler: LimitHandler,
 ) {
+    companion object {
+        private val LOG = LoggerFactory.getLogger(EmailService::class.java)
+    }
 
     @Transactional
     fun sendNewEmail(email: Email, emailId: String, priority: Priority) {
@@ -21,11 +26,19 @@ class EmailService(
 
         if (limitHandler.canSendEmailNow()) {
             try {
+                LOG.info("Sending email with id $emailId immediately")
+
                 emailServiceAzure.sendMail(email, emailId)
                 outboxEmail.successfullySent()
+
+                LOG.info("Successfully sent email with id $emailId immediately")
             } catch (e: SendMailException) {
                 outboxEmail.failedToSend()
+
+                LOG.warn("Failed to send email with id $emailId immediately")
             }
+        } else {
+            LOG.info("No quota left for sending email with id $emailId immediately")
         }
 
         emailRepository.create(outboxEmail)
@@ -34,11 +47,20 @@ class EmailService(
     @Transactional
     fun sendEmail(outboxEmail: OutboxEmail) {
         try {
+            LOG.info("Sending email with id ${outboxEmail.id}. Status: ${outboxEmail.status}. Try number: ${outboxEmail.retries}.")
+
             val email = objectMapper.readValue(outboxEmail.payload, Email::class.java)
             emailServiceAzure.sendMail(email, outboxEmail.emailId)
             outboxEmail.successfullySent()
+
+            LOG.info("Successfully sent email with id ${outboxEmail.id}")
         } catch (e: SendMailException) {
             outboxEmail.failedToSend()
+            LOG.warn("Failed to send email with id ${outboxEmail.id}")
+
+            if (outboxEmail.retries >= MAX_RETRIES) {
+                LOG.error("Failed to send email with id ${outboxEmail.id} after ${outboxEmail.retries} retries. Giving up.")
+            }
         }
 
         emailRepository.update(outboxEmail)

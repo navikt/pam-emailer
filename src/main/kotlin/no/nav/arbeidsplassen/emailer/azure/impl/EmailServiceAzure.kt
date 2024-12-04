@@ -53,7 +53,6 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties) {
                 .post(emailRequestBody)
 
         } catch (e: ODataError) {
-            LOG.warn("Failed to send email with $id. Response code ${e.responseStatusCode}.")
             SECURE_LOG.warn("Failed to send email with $id. Response code ${e.responseStatusCode}. Message ${e.message}.", e)
 
             throw SendMailException(message = "Failed to send email with $id", status = HttpStatus.valueOf(e.responseStatusCode))

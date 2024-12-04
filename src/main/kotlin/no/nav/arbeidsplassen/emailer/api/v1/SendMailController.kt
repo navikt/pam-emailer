@@ -31,10 +31,10 @@ class SendMailController(private val emailService: EmailService) {
     fun sendMail(@RequestBody emailDto: EmailDTO): ResponseEntity<Void> {
         val id = if (emailDto.identifier == null) {
             val identifier = UUID.randomUUID().toString()
-            LOG.info("Got email request without identifier, adding new identifier: $identifier")
+            LOG.info("New email request without identifier, adding new id $identifier")
             identifier
         } else {
-            LOG.info("Got email request with identifier: ${emailDto.identifier}")
+            LOG.info("New email request with id ${emailDto.identifier}")
             emailDto.identifier
         }
 
@@ -53,7 +53,7 @@ class SendMailController(private val emailService: EmailService) {
 
     @ExceptionHandler(SendMailException::class)
     fun handleSendMailException(exception: SendMailException): ResponseEntity<String> {
-        LOG.error("We got error while sending email", exception)
+        LOG.error("Error while sending email", exception)
 
         return ResponseEntity.status(exception.status).body(exception.message)
     }
