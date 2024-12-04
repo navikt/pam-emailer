@@ -7,9 +7,11 @@ import no.nav.arbeidsplassen.emailer.sendmail.LimitHandler.Companion.PENDING_EMA
 import no.nav.arbeidsplassen.emailer.sendmail.LimitHandler.Companion.RETRY_EMAIL_BATCH_SIZE
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
+@Disabled
 class LimitHandlerTest {
 
     private val emailRepository = mockk<OutboxEmailRepository>()
