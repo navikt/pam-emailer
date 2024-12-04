@@ -31,14 +31,14 @@ class ScheduledOutboxEmailSender(
         val numberOfEmailsToSend = limitHandler.emailsToSend()
 
         if (numberOfEmailsToSend == 0) {
-            LOG.info("No quota left for sending emails")
+            LOG.debug("No quota left for sending emails")
             return
         }
 
         val emails = outboxEmailRepository.findPendingSortedByCreated(numberOfEmailsToSend)
 
         if (emails.isNotEmpty()) {
-            LOG.info("Sending ${emails.size} emails (max batch size was $numberOfEmailsToSend)")
+            LOG.info("Sending ${emails.size} pending emails (max batch size was $numberOfEmailsToSend)")
 
             emails.forEach {
                 emailService.sendEmail(it)
@@ -52,7 +52,7 @@ class ScheduledOutboxEmailSender(
         val numberOfEmailsToSend = limitHandler.emailsToRetry()
 
         if (numberOfEmailsToSend == 0) {
-            LOG.info("No quota left for retrying failed emails")
+            LOG.debug("No quota left for retrying failed emails")
             return
         }
 
