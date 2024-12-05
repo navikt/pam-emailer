@@ -2,19 +2,19 @@ package no.nav.arbeidsplassen.emailer.sendmail
 
 import io.mockk.every
 import io.mockk.mockk
-import no.nav.arbeidsplassen.emailer.sendmail.LimitHandler.Companion.HIGH_PRIORITY_EMAIL_BUFFER
-import no.nav.arbeidsplassen.emailer.sendmail.LimitHandler.Companion.MAX_EMAILS_PER_HOUR
-import no.nav.arbeidsplassen.emailer.sendmail.LimitHandler.Companion.PENDING_EMAIL_BATCH_SIZE
-import no.nav.arbeidsplassen.emailer.sendmail.LimitHandler.Companion.RETRY_EMAIL_BATCH_SIZE
+import no.nav.arbeidsplassen.emailer.sendmail.EmailQuota.Companion.HIGH_PRIORITY_EMAIL_BUFFER
+import no.nav.arbeidsplassen.emailer.sendmail.EmailQuota.Companion.MAX_EMAILS_PER_HOUR
+import no.nav.arbeidsplassen.emailer.sendmail.EmailQuota.Companion.PENDING_EMAIL_BATCH_SIZE
+import no.nav.arbeidsplassen.emailer.sendmail.EmailQuota.Companion.RETRY_EMAIL_BATCH_SIZE
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
-class LimitHandlerTest {
+class EmailQuotaTest {
 
     private val emailRepository = mockk<OutboxEmailRepository>()
-    private val limitHandler: LimitHandler = LimitHandler(emailRepository)
+    private val emailQuota: EmailQuota = EmailQuota(emailRepository)
 
     @Test
     fun `Can send emails when not hitting limit`() {
@@ -23,8 +23,8 @@ class LimitHandlerTest {
         val normalPriorityEmail = OutboxEmail.newOutboxEmail("email-id", Priority.NORMAL, "payload")
         val highPriorityEmail = OutboxEmail.newOutboxEmail("email-id", Priority.HIGH, "payload")
 
-        assertTrue(limitHandler.canSendEmailNow(normalPriorityEmail))
-        assertTrue(limitHandler.canSendEmailNow(highPriorityEmail))
+        assertTrue(emailQuota.canSendEmailNow(normalPriorityEmail))
+        assertTrue(emailQuota.canSendEmailNow(highPriorityEmail))
     }
 
     @Test
@@ -34,8 +34,8 @@ class LimitHandlerTest {
         val normalPriorityEmail = OutboxEmail.newOutboxEmail("email-id", Priority.NORMAL, "payload")
         val highPriorityEmail = OutboxEmail.newOutboxEmail("email-id", Priority.HIGH, "payload")
 
-        assertFalse(limitHandler.canSendEmailNow(normalPriorityEmail))
-        assertFalse(limitHandler.canSendEmailNow(highPriorityEmail))
+        assertFalse(emailQuota.canSendEmailNow(normalPriorityEmail))
+        assertFalse(emailQuota.canSendEmailNow(highPriorityEmail))
     }
 
     @Test
@@ -44,7 +44,7 @@ class LimitHandlerTest {
 
         val normalPriorityEmail = OutboxEmail.newOutboxEmail("email-id", Priority.NORMAL, "payload")
 
-        assertFalse(limitHandler.canSendEmailNow(normalPriorityEmail))
+        assertFalse(emailQuota.canSendEmailNow(normalPriorityEmail))
     }
 
     @Test
@@ -53,48 +53,48 @@ class LimitHandlerTest {
 
         val highPriorityEmail = OutboxEmail.newOutboxEmail("email-id", Priority.HIGH, "payload")
 
-        assertTrue(limitHandler.canSendEmailNow(highPriorityEmail))
+        assertTrue(emailQuota.canSendEmailNow(highPriorityEmail))
     }
 
     @Test
     fun `Will return pending email batch size, when there are more emails than batch size left to send`() {
         every { emailRepository.countEmailsSentInLastHour() } returns MAX_EMAILS_PER_HOUR - PENDING_EMAIL_BATCH_SIZE - 10
 
-        assertEquals(PENDING_EMAIL_BATCH_SIZE, limitHandler.emailsToSend())
+        assertEquals(PENDING_EMAIL_BATCH_SIZE, emailQuota.emailsToSend())
     }
 
     @Test
     fun `Will return 0 emails to send when there are no more emails to send`() {
         every { emailRepository.countEmailsSentInLastHour() } returns MAX_EMAILS_PER_HOUR
 
-        assertEquals(0, limitHandler.emailsToSend())
+        assertEquals(0, emailQuota.emailsToSend())
     }
 
     @Test
     fun `Will return count of emails left to send, when there are less than batch size emails left to send`() {
         every { emailRepository.countEmailsSentInLastHour() } returns MAX_EMAILS_PER_HOUR - PENDING_EMAIL_BATCH_SIZE + 5
 
-        assertEquals(PENDING_EMAIL_BATCH_SIZE - 5, limitHandler.emailsToSend())
+        assertEquals(PENDING_EMAIL_BATCH_SIZE - 5, emailQuota.emailsToSend())
     }
 
     @Test
     fun `Will return retry email batch size, when there are more emails than batch size left to send`() {
         every { emailRepository.countEmailsSentInLastHour() } returns MAX_EMAILS_PER_HOUR - RETRY_EMAIL_BATCH_SIZE - 10
 
-        assertEquals(RETRY_EMAIL_BATCH_SIZE, limitHandler.emailsToRetry())
+        assertEquals(RETRY_EMAIL_BATCH_SIZE, emailQuota.emailsToRetry())
     }
 
     @Test
     fun `Will return 0 emails to send when there are no more emails to retry`() {
         every { emailRepository.countEmailsSentInLastHour() } returns MAX_EMAILS_PER_HOUR
 
-        assertEquals(0, limitHandler.emailsToRetry())
+        assertEquals(0, emailQuota.emailsToRetry())
     }
 
     @Test
     fun `Will return count of emails left to retry, when there are less than batch size emails left to retry`() {
         every { emailRepository.countEmailsSentInLastHour() } returns MAX_EMAILS_PER_HOUR - PENDING_EMAIL_BATCH_SIZE + 5
 
-        assertEquals(PENDING_EMAIL_BATCH_SIZE - 5, limitHandler.emailsToRetry())
+        assertEquals(PENDING_EMAIL_BATCH_SIZE - 5, emailQuota.emailsToRetry())
     }
 }

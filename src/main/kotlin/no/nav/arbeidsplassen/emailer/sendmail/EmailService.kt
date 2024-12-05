@@ -3,7 +3,7 @@ package no.nav.arbeidsplassen.emailer.sendmail
 import com.fasterxml.jackson.databind.ObjectMapper
 import no.nav.arbeidsplassen.emailer.azure.impl.EmailServiceAzure
 import no.nav.arbeidsplassen.emailer.azure.impl.SendMailException
-import no.nav.arbeidsplassen.emailer.sendmail.LimitHandler.Companion.MAX_RETRIES
+import no.nav.arbeidsplassen.emailer.sendmail.EmailQuota.Companion.MAX_RETRIES
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -14,7 +14,7 @@ class EmailService(
     private val emailRepository: OutboxEmailRepository,
     private val emailServiceAzure: EmailServiceAzure,
     private val objectMapper: ObjectMapper,
-    private val limitHandler: LimitHandler,
+    private val emailQuota: EmailQuota,
 ) {
     companion object {
         private val LOG = LoggerFactory.getLogger(EmailService::class.java)
@@ -24,7 +24,7 @@ class EmailService(
     fun sendNewEmail(email: Email, emailId: String, priority: Priority) {
         val outboxEmail = OutboxEmail.newOutboxEmail(emailId, priority, objectMapper.writeValueAsString(email))
 
-        if (limitHandler.canSendEmailNow(outboxEmail)) {
+        if (emailQuota.canSendEmailNow(outboxEmail)) {
             try {
                 LOG.info("Sending email with id $emailId immediately")
 

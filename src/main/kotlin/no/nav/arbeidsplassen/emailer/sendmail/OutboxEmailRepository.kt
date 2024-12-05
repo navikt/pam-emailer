@@ -1,6 +1,6 @@
 package no.nav.arbeidsplassen.emailer.sendmail
 
-import no.nav.arbeidsplassen.emailer.sendmail.LimitHandler.Companion.MAX_RETRIES
+import no.nav.arbeidsplassen.emailer.sendmail.EmailQuota.Companion.MAX_RETRIES
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate

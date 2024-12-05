@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service
 import kotlin.math.min
 
 @Service
-class LimitHandler(private val emailRepository: OutboxEmailRepository) {
+class EmailQuota(private val emailRepository: OutboxEmailRepository) {
     companion object {
         const val MAX_EMAILS_PER_HOUR = 2_850   // Actually 3000, but use a 5 % buffer to avoid hitting the limit
         const val HIGH_PRIORITY_EMAIL_BUFFER = 200
