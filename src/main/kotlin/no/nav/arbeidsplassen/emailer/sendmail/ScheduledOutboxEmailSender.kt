@@ -35,7 +35,7 @@ class ScheduledOutboxEmailSender(
             return
         }
 
-        val emails = outboxEmailRepository.findPendingSortedByCreated(numberOfEmailsToSend)
+        val emails = outboxEmailRepository.findPendingSortedByPriorityAndCreated(numberOfEmailsToSend)
 
         if (emails.isNotEmpty()) {
             LOG.info("Sending ${emails.size} pending emails (max batch size was $numberOfEmailsToSend)")
@@ -56,7 +56,7 @@ class ScheduledOutboxEmailSender(
             return
         }
 
-        val emails = outboxEmailRepository.findFailedSortedByUpdated(numberOfEmailsToSend)
+        val emails = outboxEmailRepository.findFailedSortedByPriorityAndUpdated(numberOfEmailsToSend)
 
         if (emails.isNotEmpty()) {
             LOG.info("Retrying ${emails.size} failed emails (max batch size was $numberOfEmailsToSend)")

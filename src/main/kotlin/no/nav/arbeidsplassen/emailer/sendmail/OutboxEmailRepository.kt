@@ -71,12 +71,12 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
         return jdbcTemplate.queryForObject(sql, params, rowMapper)
     }
 
-    fun findPendingSortedByCreated(limit: Int): List<OutboxEmail> {
+    fun findPendingSortedByPriorityAndCreated(limit: Int): List<OutboxEmail> {
         val sql = """
             SELECT *
             FROM outbox_email
             WHERE status = :pending_status
-            ORDER BY created_at
+            ORDER BY priority DESC, created_at
             LIMIT :limit
         """.trimIndent()
 
@@ -87,13 +87,13 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
         return jdbcTemplate.query(sql, params, rowMapper)
     }
 
-    fun findFailedSortedByUpdated(limit: Int): List<OutboxEmail> {
+    fun findFailedSortedByPriorityAndUpdated(limit: Int): List<OutboxEmail> {
         val sql = """
             SELECT *
             FROM outbox_email
             WHERE status = :failed_status
              AND retries < :max_retries
-            ORDER BY updated_at
+            ORDER BY priority DESC, updated_at
             LIMIT :limit
         """.trimIndent()
 

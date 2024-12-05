@@ -90,7 +90,7 @@ class OutboxEmailRepositoryTest : PostgresTestDatabase() {
         outboxEmailRepository.create(sentEmail)
         outboxEmailRepository.create(failedEmail)
 
-        val pendingEmails = outboxEmailRepository.findPendingSortedByCreated(2)
+        val pendingEmails = outboxEmailRepository.findPendingSortedByPriorityAndCreated(2)
 
         assertThat(pendingEmails)
             .extracting("id")
@@ -99,6 +99,23 @@ class OutboxEmailRepositoryTest : PostgresTestDatabase() {
         assertThat(pendingEmails)
             .extracting("id")
             .doesNotContain(pendingEmail.id, sentEmail.id, failedEmail.id)
+    }
+
+    @Test
+    fun `High priority are returned before normal priority from find pending`() {
+        val pendingEmailNormalPriority = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload")
+        val pendingEmailOlderHighPriority = pendingEmailNormalPriority.copy(id = UUID.randomUUID(), priority = Priority.HIGH, createdAt = OffsetDateTime.now().minusHours(1))
+        val pendingEmailOldestNormalPriority = pendingEmailNormalPriority.copy(id = UUID.randomUUID(), createdAt = OffsetDateTime.now().minusHours(2))
+
+        outboxEmailRepository.create(pendingEmailNormalPriority)
+        outboxEmailRepository.create(pendingEmailOlderHighPriority)
+        outboxEmailRepository.create(pendingEmailOldestNormalPriority)
+
+        val pendingEmails = outboxEmailRepository.findPendingSortedByPriorityAndCreated(10)
+
+        assertEquals(pendingEmailOlderHighPriority.id, pendingEmails[0].id)
+        assertEquals(pendingEmailOldestNormalPriority.id, pendingEmails[1].id)
+        assertEquals(pendingEmailNormalPriority.id, pendingEmails[2].id)
     }
 
     @Test
@@ -115,11 +132,28 @@ class OutboxEmailRepositoryTest : PostgresTestDatabase() {
         outboxEmailRepository.create(failedEmailOldest)
         outboxEmailRepository.create(sentEmail)
 
-        val failedEmails = outboxEmailRepository.findFailedSortedByUpdated(2)
+        val failedEmails = outboxEmailRepository.findFailedSortedByPriorityAndUpdated(2)
 
         assertEquals(2, failedEmails.size)
 
         assertEquals(failedEmailOldest.id, failedEmails[0].id)
         assertEquals(failedEmailOlder.id, failedEmails[1].id)
+    }
+
+    @Test
+    fun `High priority are returned before normal priority from find failed`() {
+        val failedEmailNormalPriority = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload").apply { status = Status.FAILED }
+        val failedEmailOlderHighPriority = failedEmailNormalPriority.copy(id = UUID.randomUUID(), priority = Priority.HIGH, updatedAt = OffsetDateTime.now().minusHours(1))
+        val failedEmailOldestNormalPriority = failedEmailNormalPriority.copy(id = UUID.randomUUID(), updatedAt = OffsetDateTime.now().minusHours(2))
+
+        outboxEmailRepository.create(failedEmailNormalPriority)
+        outboxEmailRepository.create(failedEmailOlderHighPriority)
+        outboxEmailRepository.create(failedEmailOldestNormalPriority)
+
+        val failedEmails = outboxEmailRepository.findFailedSortedByPriorityAndUpdated(10)
+
+        assertEquals(failedEmailOlderHighPriority.id, failedEmails[0].id)
+        assertEquals(failedEmailOldestNormalPriority.id, failedEmails[1].id)
+        assertEquals(failedEmailNormalPriority.id, failedEmails[2].id)
     }
 }
