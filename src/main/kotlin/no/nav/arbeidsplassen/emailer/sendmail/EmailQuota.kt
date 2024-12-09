@@ -32,25 +32,36 @@ class EmailQuota(private val emailRepository: OutboxEmailRepository) {
         }
     }
 
-    fun emailsToSend(): Int {
+    fun getPendingEmailsMaxBatchSize(): BatchSize {
         val emailsSentInLastHour = emailRepository.countEmailsSentInLastHour()
         val emailsLeftToSendThisHour = MAX_EMAILS_PER_HOUR - emailsSentInLastHour
 
         return if (emailsLeftToSendThisHour <= 0) {
-            0
+            BatchSize(0)
         } else {
-            min(emailsLeftToSendThisHour, PENDING_EMAIL_BATCH_SIZE)
+            val batchSize = min(emailsLeftToSendThisHour, PENDING_EMAIL_BATCH_SIZE)
+            val highPriorityOnly = emailsLeftToSendThisHour <= HIGH_PRIORITY_EMAIL_BUFFER
+
+            return BatchSize(batchSize, highPriorityOnly)
         }
     }
 
-    fun emailsToRetry(): Int {
+    fun getRetryFailedEmailsMaxBatchSize(): BatchSize {
         val emailsSentInLastHour = emailRepository.countEmailsSentInLastHour()
         val emailsLeftToSendThisHour = MAX_EMAILS_PER_HOUR - emailsSentInLastHour
 
         return if (emailsLeftToSendThisHour <= 0) {
-            0
+            BatchSize(0)
         } else {
-            min(emailsLeftToSendThisHour, RETRY_EMAIL_BATCH_SIZE)
+            val batchSize = min(emailsLeftToSendThisHour, RETRY_EMAIL_BATCH_SIZE)
+            val highPriorityOnly = emailsLeftToSendThisHour <= HIGH_PRIORITY_EMAIL_BUFFER
+
+            return BatchSize(batchSize, highPriorityOnly)
         }
     }
+
+    data class BatchSize(
+        val numberOfEmails: Int,
+        val highPriorityOnly: Boolean = false
+    )
 }

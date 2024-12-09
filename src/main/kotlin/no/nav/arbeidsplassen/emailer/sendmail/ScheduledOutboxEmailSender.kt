@@ -28,17 +28,17 @@ class ScheduledOutboxEmailSender(
         lockAtMostFor = PENDING_EMAIL_LOCK_AT_MOST_FOR
     )
     fun sendPendingEmails() {
-        val numberOfEmailsToSend = emailQuota.emailsToSend()
+        val batchSize = emailQuota.getPendingEmailsMaxBatchSize()
 
-        if (numberOfEmailsToSend == 0) {
+        if (batchSize.numberOfEmails == 0) {
             LOG.debug("No quota left for sending emails")
             return
         }
 
-        val emails = outboxEmailRepository.findPendingSortedByPriorityAndCreated(numberOfEmailsToSend)
+        val emails = outboxEmailRepository.findPendingSortedByPriorityAndCreated(batchSize.numberOfEmails)
 
         if (emails.isNotEmpty()) {
-            LOG.info("Sending ${emails.size} pending emails (max batch size was $numberOfEmailsToSend)")
+            LOG.info("Sending ${emails.size} pending emails (max batch size was ${batchSize.numberOfEmails})")
 
             emails.forEach {
                 emailService.sendEmail(it)
@@ -49,17 +49,17 @@ class ScheduledOutboxEmailSender(
     @Scheduled(cron = RETRY_EMAIL_CRON)
     @SchedulerLock(name = "retryFailedEmails", lockAtLeastFor = RETRY_EMAIL_LOCK_AT_LEAST_FOR, lockAtMostFor = RETRY_EMAIL_LOCK_AT_MOST_FOR)
     fun retryFailedEmails() {
-        val numberOfEmailsToSend = emailQuota.emailsToRetry()
+        val batchSize = emailQuota.getRetryFailedEmailsMaxBatchSize()
 
-        if (numberOfEmailsToSend == 0) {
+        if (batchSize.numberOfEmails == 0) {
             LOG.debug("No quota left for retrying failed emails")
             return
         }
 
-        val emails = outboxEmailRepository.findFailedSortedByPriorityAndUpdated(numberOfEmailsToSend)
+        val emails = outboxEmailRepository.findFailedSortedByPriorityAndUpdated(batchSize.numberOfEmails)
 
         if (emails.isNotEmpty()) {
-            LOG.info("Retrying ${emails.size} failed emails (max batch size was $numberOfEmailsToSend)")
+            LOG.info("Retrying ${emails.size} failed emails (max batch size was ${batchSize.numberOfEmails})")
 
             emails.forEach {
                 emailService.sendEmail(it)
