@@ -90,7 +90,7 @@ class OutboxEmailRepositoryTest : PostgresTestDatabase() {
         outboxEmailRepository.create(sentEmail)
         outboxEmailRepository.create(failedEmail)
 
-        val pendingEmails = outboxEmailRepository.findPendingSortedByPriorityAndCreated(2)
+        val pendingEmails = outboxEmailRepository.findPendingSortedByPriorityAndCreated(2, false)
 
         assertThat(pendingEmails)
             .extracting("id")
@@ -99,6 +99,21 @@ class OutboxEmailRepositoryTest : PostgresTestDatabase() {
         assertThat(pendingEmails)
             .extracting("id")
             .doesNotContain(pendingEmail.id, sentEmail.id, failedEmail.id)
+    }
+
+    @Test
+    fun `Pending emails will only return high priority emails when flag is set`() {
+        val pendingEmailNormalPriority = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload")
+        val pendingEmailHighPriority = pendingEmailNormalPriority.copy(id = UUID.randomUUID(), priority = Priority.HIGH, updatedAt = OffsetDateTime.now().minusMinutes(20))
+
+        outboxEmailRepository.create(pendingEmailNormalPriority)
+        outboxEmailRepository.create(pendingEmailHighPriority)
+
+        val pendingEmails = outboxEmailRepository.findPendingSortedByPriorityAndCreated(10, true)
+
+        assertEquals(1, pendingEmails.size)
+
+        assertEquals(pendingEmailHighPriority.id, pendingEmails.first().id)
     }
 
     @Test
@@ -111,7 +126,7 @@ class OutboxEmailRepositoryTest : PostgresTestDatabase() {
         outboxEmailRepository.create(pendingEmailOlderHighPriority)
         outboxEmailRepository.create(pendingEmailOldestNormalPriority)
 
-        val pendingEmails = outboxEmailRepository.findPendingSortedByPriorityAndCreated(10)
+        val pendingEmails = outboxEmailRepository.findPendingSortedByPriorityAndCreated(10, false)
 
         assertEquals(pendingEmailOlderHighPriority.id, pendingEmails[0].id)
         assertEquals(pendingEmailOldestNormalPriority.id, pendingEmails[1].id)
@@ -132,12 +147,27 @@ class OutboxEmailRepositoryTest : PostgresTestDatabase() {
         outboxEmailRepository.create(failedEmailOldest)
         outboxEmailRepository.create(sentEmail)
 
-        val failedEmails = outboxEmailRepository.findFailedSortedByPriorityAndUpdated(2)
+        val failedEmails = outboxEmailRepository.findFailedSortedByPriorityAndUpdated(2, false)
 
         assertEquals(2, failedEmails.size)
 
         assertEquals(failedEmailOldest.id, failedEmails[0].id)
         assertEquals(failedEmailOlder.id, failedEmails[1].id)
+    }
+
+    @Test
+    fun `Failed emails will only return high priority emails when flag is set`() {
+        val failedEmailNormalPriority = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload").apply { status = Status.FAILED }
+        val failedEmailHighPriority = failedEmailNormalPriority.copy(id = UUID.randomUUID(), priority = Priority.HIGH, updatedAt = OffsetDateTime.now().minusMinutes(20))
+
+        outboxEmailRepository.create(failedEmailNormalPriority)
+        outboxEmailRepository.create(failedEmailHighPriority)
+
+        val failedEmails = outboxEmailRepository.findFailedSortedByPriorityAndUpdated(10, true)
+
+        assertEquals(1, failedEmails.size)
+
+        assertEquals(failedEmailHighPriority.id, failedEmails.first().id)
     }
 
     @Test
@@ -150,7 +180,7 @@ class OutboxEmailRepositoryTest : PostgresTestDatabase() {
         outboxEmailRepository.create(failedEmailOlderHighPriority)
         outboxEmailRepository.create(failedEmailOldestNormalPriority)
 
-        val failedEmails = outboxEmailRepository.findFailedSortedByPriorityAndUpdated(10)
+        val failedEmails = outboxEmailRepository.findFailedSortedByPriorityAndUpdated(10, false)
 
         assertEquals(failedEmailOlderHighPriority.id, failedEmails[0].id)
         assertEquals(failedEmailOldestNormalPriority.id, failedEmails[1].id)

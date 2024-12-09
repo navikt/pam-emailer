@@ -46,7 +46,8 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
                 :retries,
                 :payload
             )
-        """.trimIndent()
+        """
+
         val params = MapSqlParameterSource()
             .addValue("id", outboxEmail.id)
             .addValue("email_id", outboxEmail.emailId)
@@ -65,42 +66,59 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
             SELECT *
             FROM outbox_email
             WHERE id = :id
-        """.trimIndent()
+        """
+
         val params = MapSqlParameterSource("id", id)
 
         return jdbcTemplate.queryForObject(sql, params, rowMapper)
     }
 
-    fun findPendingSortedByPriorityAndCreated(limit: Int): List<OutboxEmail> {
-        val sql = """
+    fun findPendingSortedByPriorityAndCreated(limit: Int, highPriorityOnly: Boolean): List<OutboxEmail> {
+        var sql = """
             SELECT *
             FROM outbox_email
             WHERE status = :pending_status
+         """
+
+        if (highPriorityOnly) {
+            sql += " AND priority = :high_priority"
+        }
+
+        sql += """
             ORDER BY priority DESC, created_at
             LIMIT :limit
-        """.trimIndent()
+        """
 
         val params = MapSqlParameterSource()
             .addValue("pending_status", Status.PENDING.toString())
             .addValue("limit", limit)
+            .addValue("high_priority", Priority.HIGH.value)
 
         return jdbcTemplate.query(sql, params, rowMapper)
     }
 
-    fun findFailedSortedByPriorityAndUpdated(limit: Int): List<OutboxEmail> {
-        val sql = """
+    fun findFailedSortedByPriorityAndUpdated(limit: Int, highPriorityOnly: Boolean): List<OutboxEmail> {
+        var sql = """
             SELECT *
             FROM outbox_email
             WHERE status = :failed_status
              AND retries < :max_retries
+        """
+
+        if (highPriorityOnly) {
+            sql += " AND priority = :high_priority"
+        }
+
+        sql += """
             ORDER BY priority DESC, updated_at
             LIMIT :limit
-        """.trimIndent()
+        """
 
         val params = MapSqlParameterSource()
             .addValue("failed_status", Status.FAILED.toString())
             .addValue("max_retries", MAX_RETRIES)
             .addValue("limit", limit)
+            .addValue("high_priority", Priority.HIGH.value)
 
         return jdbcTemplate.query(sql, params, rowMapper)
     }
@@ -117,7 +135,7 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
                 retries = :retries,
                 payload = :payload
             WHERE id = :id
-        """.trimIndent()
+        """
 
         val params = MapSqlParameterSource()
             .addValue("id", outboxEmail.id)
@@ -139,7 +157,7 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
             FROM outbox_email
             WHERE updated_at > :one_hour_ago
                 AND status = :sent_status
-        """.trimIndent()
+        """
 
         val params = MapSqlParameterSource()
             .addValue("one_hour_ago", oneHourAgo)
