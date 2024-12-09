@@ -12,13 +12,12 @@ import com.microsoft.graph.models.Recipient
 import com.microsoft.graph.models.odataerrors.ODataError
 import com.microsoft.graph.serviceclient.GraphServiceClient
 import com.microsoft.graph.users.item.sendmail.SendMailPostRequestBody
-import no.nav.arbeidsplassen.emailer.api.v1.EmailDTO
+import no.nav.arbeidsplassen.emailer.sendmail.Email
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.temporal.ChronoUnit
-import java.util.*
 
 
 @Service
@@ -44,70 +43,44 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties) {
             .build()
     )
 
-    fun sendMail(emailDto: EmailDTO, id: String) {
+    fun sendMail(email: Email, id: String) {
+        val emailRequestBody = createEmailRequestBody(email)
+
+        try {
+            graphClient.users()
+                .byUserId(aadProperties.userPrincipal)
+                .sendMail()
+                .post(emailRequestBody)
+
+        } catch (e: ODataError) {
+            SECURE_LOG.warn("Failed to send email with $id. Response code ${e.responseStatusCode}. Message ${e.message}.", e)
+
+            throw SendMailException(message = "Failed to send email with $id", status = HttpStatus.valueOf(e.responseStatusCode))
+        } catch (e: Exception) {
+            LOG.error("Failed to send email with $id. Unknown exception.", e)
+
+            throw SendMailException(message = "Failed to send email with $id", e = e)
+        }
+    }
+
+    private fun createEmailRequestBody(email: Email): SendMailPostRequestBody {
         val message = Message().apply {
-            subject = emailDto.subject
+            subject = email.subject
             body = ItemBody().apply {
-                contentType = BodyType.forValue(emailDto.type.lowercase())
-                content = emailDto.content
+                contentType = BodyType.forValue(email.type.lowercase())
+                content = email.content
             }
-            toRecipients = listOf(Recipient().apply { emailAddress = EmailAddress().apply { address = emailDto.recipient.trim() } })
-            attachments = emailDto.attachments.map { FileAttachment().apply {
+            toRecipients = listOf(Recipient().apply { emailAddress = EmailAddress().apply { address = email.recipient.trim() } })
+            attachments = email.attachments.map { FileAttachment().apply {
                 name = it.name
                 contentType = it.contentType
-                contentBytes = Base64.getDecoder().decode(it.base64Content.encodeToByteArray())
+                contentBytes = it.content.toByteArray()
             } }
         }
-        val email = SendMailPostRequestBody().apply {
+        return SendMailPostRequestBody().apply {
             this.message = message
             saveToSentItems = false
         }
-
-        try {
-            sendMailWithRetry(email, id)
-        } catch (e: SendMailException) {
-            throw e
-        } catch (e: Exception) {
-            throw SendMailException(message = e.message, e = e)
-        }
     }
 
-    private fun sendMailWithRetry(email: SendMailPostRequestBody, id: String) {
-        val maxRetries = 3
-        var tryNo = 0
-        var finished = false
-        val httpErrors: MutableSet<Int> = mutableSetOf()
-
-        while (!finished && tryNo < maxRetries) {
-            tryNo++
-
-            try {
-                graphClient.users()
-                    .byUserId(aadProperties.userPrincipal)
-                    .sendMail()
-                    .post(email)
-
-                finished = true
-
-            } catch (e: ODataError) {
-                LOG.warn("Failed to send email with $id, try $tryNo. Response code ${e.responseStatusCode}. Wait and retry.")
-                SECURE_LOG.warn("Failed to send email with $id. Response code ${e.responseStatusCode}. Message ${e.message}.", e)
-
-                httpErrors.add(e.responseStatusCode)
-
-                if (tryNo < maxRetries) {
-                    Thread.sleep(3000L)
-                }
-            } catch (e: Exception) {
-                LOG.error("Failed to send email with $id, try $tryNo. Unknown exception.", e)
-                throw SendMailException(message = "Failed to send email with $id", e = e)
-            }
-        }
-
-        if (!finished) {
-            LOG.error("Fatal error for email with id $id. Gave up after $tryNo retries.")
-            val status = if (httpErrors.size == 1) HttpStatus.valueOf(httpErrors.first()) else HttpStatus.INTERNAL_SERVER_ERROR
-            throw SendMailException(message = "Fatal error for email with id $id", status = status)
-        }
-    }
 }

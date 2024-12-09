@@ -46,6 +46,13 @@ spec:
   {{/each}}
   envFrom:
     - secret: pam-emailer
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_16
+        tier: {{database_tier}}
+        databases:
+          - name: pam-emailer-db
+            envVarPrefix: DB
   accessPolicy:
     inbound:
       rules:

@@ -2,6 +2,12 @@ spring:
   application:
     name: pam-emailer
 
+  datasource:
+    url: ${db.jdbc.url}
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 5
+
 management:
   endpoints.web.exposure.include: prometheus
   endpoint:
