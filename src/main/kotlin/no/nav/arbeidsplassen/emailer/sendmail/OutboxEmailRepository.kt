@@ -71,7 +71,7 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
 
         val params = MapSqlParameterSource("id", id)
 
-        return jdbcTemplate.queryForObject(sql, params, rowMapper)
+        return jdbcTemplate.query(sql, params, rowMapper).firstOrNull()
     }
 
     fun findPendingSortedByPriorityAndCreated(limit: Int, highPriorityOnly: Boolean): List<OutboxEmail> {
@@ -169,6 +169,22 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
             .addValue("sent_status", Status.SENT.toString())
 
         return jdbcTemplate.queryForObject(sql, params, Int::class.java)!!
+    }
+
+    fun deleteEmailsOlderThanAnHour() {
+        val oneHourAgo = OffsetDateTime.now().minusHours(1)
+        val sql = """
+            DELETE 
+            FROM outbox_email
+            WHERE updated_at < :one_hour_ago
+                AND status = :sent_status
+        """
+
+        val params = MapSqlParameterSource()
+            .addValue("one_hour_ago", oneHourAgo)
+            .addValue("sent_status", Status.SENT.toString())
+
+        jdbcTemplate.update(sql, params)
     }
 
 }

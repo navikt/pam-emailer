@@ -11,6 +11,8 @@ import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.util.*
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 @SpringBootTest
 class OutboxEmailRepositoryTest : PostgresTestDatabase() {
@@ -220,5 +222,42 @@ class OutboxEmailRepositoryTest : PostgresTestDatabase() {
 
         assertEquals(1, failedEmails.size)
         assertEquals(emailBelowRetryLimit.id, failedEmails[0].id)
+    }
+
+    @Test
+    fun `Emails not sent more than an hour ago will not be deleted`() {
+        val pendingEmail = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload")
+        val sentEmail = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload").apply { status = Status.SENT }
+        val failed = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload").apply { status = Status.FAILED }
+
+        outboxEmailRepository.create(pendingEmail)
+        outboxEmailRepository.create(sentEmail)
+        outboxEmailRepository.create(failed)
+
+        outboxEmailRepository.deleteEmailsOlderThanAnHour()
+
+        assertNotNull(outboxEmailRepository.findById(pendingEmail.id))
+        assertNotNull(outboxEmailRepository.findById(sentEmail.id))
+        assertNotNull(outboxEmailRepository.findById(failed.id))
+    }
+
+    @Test
+    fun `Only emails sent more than an hour ago are deleted with`() {
+        val pendingEmail = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload")
+            .apply { updatedAt = OffsetDateTime.now().minusHours(2) }
+        val sentEmail = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload")
+            .apply { status = Status.SENT; updatedAt = OffsetDateTime.now().minusHours(2) }
+        val failed = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload")
+            .apply { status = Status.FAILED; updatedAt = OffsetDateTime.now().minusHours(2) }
+
+        outboxEmailRepository.create(pendingEmail)
+        outboxEmailRepository.create(sentEmail)
+        outboxEmailRepository.create(failed)
+
+        outboxEmailRepository.deleteEmailsOlderThanAnHour()
+
+        assertNotNull(outboxEmailRepository.findById(pendingEmail.id))
+        assertNull(outboxEmailRepository.findById(sentEmail.id))
+        assertNotNull(outboxEmailRepository.findById(failed.id))
     }
 }
