@@ -186,4 +186,39 @@ class OutboxEmailRepositoryTest : PostgresTestDatabase() {
         assertEquals(failedEmailOldestNormalPriority.id, failedEmails[1].id)
         assertEquals(failedEmailNormalPriority.id, failedEmails[2].id)
     }
+
+    @Test
+    fun `Normal priority emails are retried 1 times`() {
+        val emailBelowRetryLimit = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload")
+        emailBelowRetryLimit.failedToSend()
+
+        val emailAboveRetryLimit = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload")
+        emailAboveRetryLimit.failedToSend() // Failed first, "normal" attempt
+        emailAboveRetryLimit.failedToSend() // Failed retry
+
+        outboxEmailRepository.create(emailBelowRetryLimit)
+        outboxEmailRepository.create(emailAboveRetryLimit)
+
+        val failedEmails = outboxEmailRepository.findFailedSortedByPriorityAndUpdated(10, false)
+
+        assertEquals(1, failedEmails.size)
+        assertEquals(emailBelowRetryLimit.id, failedEmails[0].id)
+    }
+
+    @Test
+    fun `High priority emails are retried 50 times`() {
+        val emailBelowRetryLimit = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.HIGH, "payload")
+        emailBelowRetryLimit.failedToSend()
+        emailBelowRetryLimit.retries = 49
+
+        val emailAboveRetryLimit = emailBelowRetryLimit.copy(id = UUID.randomUUID(), retries = 50)
+
+        outboxEmailRepository.create(emailBelowRetryLimit)
+        outboxEmailRepository.create(emailAboveRetryLimit)
+
+        val failedEmails = outboxEmailRepository.findFailedSortedByPriorityAndUpdated(10, false)
+
+        assertEquals(1, failedEmails.size)
+        assertEquals(emailBelowRetryLimit.id, failedEmails[0].id)
+    }
 }

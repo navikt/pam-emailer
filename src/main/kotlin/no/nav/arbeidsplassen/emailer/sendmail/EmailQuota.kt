@@ -20,7 +20,9 @@ class EmailQuota(private val emailRepository: OutboxEmailRepository) {
         const val RETRY_EMAIL_CRON = "0 */5 * * * *"
         const val RETRY_EMAIL_LOCK_AT_LEAST_FOR = "PT4M"
         const val RETRY_EMAIL_LOCK_AT_MOST_FOR = "PT20M"
-        const val MAX_RETRIES = 15
+
+        const val MAX_RETRIES_NORMAL_PRIORITY_EMAIL = 1
+        const val MAX_RETRIES_HIGH_PRIORITY_EMAIL = 50
     }
 
     fun canSendEmailNow(outboxEmail: OutboxEmail): Boolean {

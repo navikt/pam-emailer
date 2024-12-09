@@ -1,5 +1,7 @@
 package no.nav.arbeidsplassen.emailer.sendmail
 
+import no.nav.arbeidsplassen.emailer.sendmail.EmailQuota.Companion.MAX_RETRIES_HIGH_PRIORITY_EMAIL
+import no.nav.arbeidsplassen.emailer.sendmail.EmailQuota.Companion.MAX_RETRIES_NORMAL_PRIORITY_EMAIL
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -37,9 +39,26 @@ data class OutboxEmail(
     }
 
     fun failedToSend() {
+        if (status != Status.PENDING) {
+            retries++
+        }
         status = Status.FAILED
         updatedAt = OffsetDateTime.now()
-        retries++
+    }
+
+    fun tryNumber(): Int? {
+        return when(status) {
+            Status.PENDING -> 1
+            Status.FAILED -> retries+1+1 // +1 for the initial try, +1 for the current try
+            Status.SENT -> null
+        }
+    }
+
+    fun maxNumberOfRetriesReached(): Boolean {
+        return when(priority) {
+            Priority.HIGH -> retries >= MAX_RETRIES_HIGH_PRIORITY_EMAIL
+            Priority.NORMAL -> retries >= MAX_RETRIES_NORMAL_PRIORITY_EMAIL
+        }
     }
 }
 

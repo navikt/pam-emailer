@@ -3,7 +3,6 @@ package no.nav.arbeidsplassen.emailer.sendmail
 import com.fasterxml.jackson.databind.ObjectMapper
 import no.nav.arbeidsplassen.emailer.azure.impl.EmailServiceAzure
 import no.nav.arbeidsplassen.emailer.azure.impl.SendMailException
-import no.nav.arbeidsplassen.emailer.sendmail.EmailQuota.Companion.MAX_RETRIES
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -47,7 +46,7 @@ class EmailService(
     @Transactional
     fun sendEmail(outboxEmail: OutboxEmail) {
         try {
-            LOG.info("Sending email with id ${outboxEmail.id}. Status: ${outboxEmail.status}. Try number: ${outboxEmail.retries}.")
+            LOG.info("Sending email with id ${outboxEmail.id}. Status: ${outboxEmail.status}. Try number: ${outboxEmail.tryNumber()}.")
 
             val email = objectMapper.readValue(outboxEmail.payload, Email::class.java)
             emailServiceAzure.sendMail(email, outboxEmail.emailId)
@@ -58,7 +57,7 @@ class EmailService(
             outboxEmail.failedToSend()
             LOG.warn("Failed to send email with id ${outboxEmail.id}")
 
-            if (outboxEmail.retries >= MAX_RETRIES) {
+            if (outboxEmail.maxNumberOfRetriesReached()) {
                 LOG.error("Failed to send email with id ${outboxEmail.id} after ${outboxEmail.retries} retries. Giving up.")
             }
         }

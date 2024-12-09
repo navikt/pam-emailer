@@ -1,6 +1,7 @@
 package no.nav.arbeidsplassen.emailer.sendmail
 
-import no.nav.arbeidsplassen.emailer.sendmail.EmailQuota.Companion.MAX_RETRIES
+import no.nav.arbeidsplassen.emailer.sendmail.EmailQuota.Companion.MAX_RETRIES_HIGH_PRIORITY_EMAIL
+import no.nav.arbeidsplassen.emailer.sendmail.EmailQuota.Companion.MAX_RETRIES_NORMAL_PRIORITY_EMAIL
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -102,7 +103,9 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
             SELECT *
             FROM outbox_email
             WHERE status = :failed_status
-             AND retries < :max_retries
+             AND ((priority = :normal_priority AND retries < :max_retries_normal_priority)
+                    OR
+                  (priority = :high_priority AND retries < :max_retries_high_priority))
         """
 
         if (highPriorityOnly) {
@@ -116,9 +119,11 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
 
         val params = MapSqlParameterSource()
             .addValue("failed_status", Status.FAILED.toString())
-            .addValue("max_retries", MAX_RETRIES)
+            .addValue("max_retries_normal_priority", MAX_RETRIES_NORMAL_PRIORITY_EMAIL)
+            .addValue("max_retries_high_priority", MAX_RETRIES_HIGH_PRIORITY_EMAIL)
             .addValue("limit", limit)
             .addValue("high_priority", Priority.HIGH.value)
+            .addValue("normal_priority", Priority.NORMAL.value)
 
         return jdbcTemplate.query(sql, params, rowMapper)
     }
