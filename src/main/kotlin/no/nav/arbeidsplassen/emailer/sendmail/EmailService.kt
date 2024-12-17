@@ -44,7 +44,7 @@ class EmailService(
     }
 
     @Transactional
-    fun sendEmail(outboxEmail: OutboxEmail) {
+    fun sendExistingEmail(outboxEmail: OutboxEmail) {
         try {
             LOG.info("Sending email with id ${outboxEmail.id}. Status: ${outboxEmail.status}. Try number: ${outboxEmail.tryNumber()}.")
 

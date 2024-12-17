@@ -41,7 +41,7 @@ class ScheduledOutboxEmailSender(
             LOG.info("Sending ${emails.size} pending emails (max batch size was ${batchSize.numberOfEmails})")
 
             emails.forEach {
-                emailService.sendEmail(it)
+                emailService.sendExistingEmail(it)
             }
         }
     }
@@ -62,7 +62,7 @@ class ScheduledOutboxEmailSender(
             LOG.info("Retrying ${emails.size} failed emails (max batch size was ${batchSize.numberOfEmails})")
 
             emails.forEach {
-                emailService.sendEmail(it)
+                emailService.sendExistingEmail(it)
             }
         }
     }
