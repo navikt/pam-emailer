@@ -1,0 +1,4 @@
+networks:
+  default:
+    name: pam-shared-network
+    external: true

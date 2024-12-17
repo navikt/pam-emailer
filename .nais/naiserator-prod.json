@@ -1,3 +1,4 @@
 {
-  "ingress": ["https://pam-emailer.intern.nav.no"]
+  "ingress": ["https://pam-emailer.intern.nav.no"],
+  "database_tier": "db-custom-1-3840"
 }
