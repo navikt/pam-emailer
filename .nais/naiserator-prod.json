@@ -2,5 +2,5 @@
   "ingress": ["https://pam-emailer.intern.nav.no"],
   "database_tier": "db-custom-1-3840",
   "database_connection_pool_size": "15",
-  "database_high_availability": true
+  "database_high_availability": "true"
 }
