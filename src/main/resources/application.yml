@@ -5,8 +5,8 @@ spring:
   datasource:
     url: ${db.jdbc.url}
     hikari:
-      minimum-idle: 5
-      maximum-pool-size: 5
+      minimum-idle: ${db.connection.pool.size:5}
+      maximum-pool-size: ${db.connection.pool.size:5}
 
 management:
   endpoints.web.exposure.include: prometheus
