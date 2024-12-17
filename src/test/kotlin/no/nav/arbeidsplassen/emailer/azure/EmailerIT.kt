@@ -1,5 +1,6 @@
 package no.nav.arbeidsplassen.emailer.azure
 
+import no.nav.arbeidsplassen.emailer.PostgresTestDatabase
 import no.nav.arbeidsplassen.emailer.api.v1.AttachmentDto
 import no.nav.arbeidsplassen.emailer.api.v1.EmailDTO
 import no.nav.arbeidsplassen.emailer.api.v1.SendMailController
@@ -11,7 +12,7 @@ import java.util.*
 
 @Disabled
 @SpringBootTest
-class EmailerIT {
+class EmailerIT : PostgresTestDatabase() {
 
     @Autowired
     private lateinit var sendMailController: SendMailController
@@ -23,7 +24,8 @@ class EmailerIT {
             recipient = "recipient@somewhere.com",
             subject = "Dette er en test",
             content = "Dette er en test content",
-            type = "TEXT"
+            type = "TEXT",
+            priority = "normal"
         )
 
         sendMailController.sendMail(email)
@@ -37,7 +39,8 @@ class EmailerIT {
             subject = "Dette er en test",
             content = "Dette er en test content",
             type = "TEXT",
-            attachments = listOf(AttachmentDto("test.txt", "plain/text", Base64.getEncoder().encodeToString("Hei!".encodeToByteArray())))
+            attachments = listOf(AttachmentDto("test.txt", "plain/text", Base64.getEncoder().encodeToString("Hei!".encodeToByteArray()))),
+            priority = "normal"
         )
 
         sendMailController.sendMail(email)

@@ -42,6 +42,7 @@ class SendMailController(private val emailService: EmailService) {
             recipient = emailDto.recipient,
             subject = emailDto.subject,
             content = emailDto.content,
+            priority = Priority.fromValue(emailDto.priority) ?: Priority.NORMAL,
             type = emailDto.type,
             attachments = emailDto.attachments.map { Attachment(it.name, it.contentType, Base64.Default.decode(it.base64Content).decodeToString()) }
         )

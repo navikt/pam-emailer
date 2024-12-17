@@ -4,6 +4,7 @@ data class Email(
     val recipient: String,
     val subject: String,
     val content: String,
+    val priority: Priority,
     val type: String,
     val attachments: List<Attachment> = listOf()
 )
@@ -20,5 +21,6 @@ enum class Priority(val value: Int) {
 
     companion object {
         fun fromValue(value: Int) = entries.first { it.value == value }
+        fun fromValue(name: String?) = entries.firstOrNull { it.name.equals(name, ignoreCase = true) }
     }
 }

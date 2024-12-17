@@ -8,6 +8,7 @@ data class EmailDTO(
     val recipient: String,
     val subject: String,
     val content: String,
+    val priority: String?,
     val type: String,
     val attachments: List<AttachmentDto> = listOf()
 )
