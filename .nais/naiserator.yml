@@ -46,7 +46,7 @@ spec:
   {{/each}}
   env:
     - name: DB_CONNECTION_POOL_SIZE
-      value: {{ database_connection_pool_size }}
+      value: "{{ database_connection_pool_size }}"
   envFrom:
     - secret: pam-emailer
   gcp:
