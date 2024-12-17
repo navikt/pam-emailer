@@ -53,6 +53,7 @@ spec:
     sqlInstances:
       - type: POSTGRES_16
         tier: {{database_tier}}
+        highAvailability: {{database_high_availability}}
         databases:
           - name: pam-emailer-db
             envVarPrefix: DB
