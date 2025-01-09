@@ -1,6 +1,14 @@
 package no.nav.arbeidsplassen.emailer.sendmail
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import io.mockk.Runs
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
 import no.nav.arbeidsplassen.emailer.PostgresTestDatabase
+import no.nav.arbeidsplassen.emailer.azure.impl.EmailServiceAzure
+import no.nav.arbeidsplassen.emailer.azure.impl.SendMailException
+import no.nav.arbeidsplassen.emailer.sendmail.EmailQuota.Companion.MAX_RETRIES_NORMAL_PRIORITY_EMAIL
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -205,6 +213,37 @@ class OutboxEmailRepositoryTest : PostgresTestDatabase() {
 
         assertEquals(1, failedEmails.size)
         assertEquals(emailBelowRetryLimit.id, failedEmails[0].id)
+    }
+
+    @Test
+    fun `Should delete normal priority email when max retries are reached`() {
+        val emailServiceAzure = mockk<EmailServiceAzure>()
+        val objectMapper = mockk<ObjectMapper>()
+        val emailQuota = mockk<EmailQuota>()
+        val emailService = EmailService(outboxEmailRepository, emailServiceAzure, objectMapper, emailQuota)
+
+        val emailAboveRetryLimit = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload").apply {
+            retries = MAX_RETRIES_NORMAL_PRIORITY_EMAIL
+            status = Status.FAILED
+        }
+        val emailBelowRetryLimit = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload").apply {
+            retries = MAX_RETRIES_NORMAL_PRIORITY_EMAIL - 1
+            status = Status.FAILED
+        }
+
+        outboxEmailRepository.create(emailAboveRetryLimit)
+        outboxEmailRepository.create(emailBelowRetryLimit)
+
+        every { emailServiceAzure.sendMail(any(), emailAboveRetryLimit.emailId) } throws SendMailException("Failed to send email")
+        every { objectMapper.readValue(emailAboveRetryLimit.payload, Email::class.java) } returns Email("", "", "", Priority.NORMAL, "")
+        emailService.sendExistingEmail(emailAboveRetryLimit)
+
+        every { emailServiceAzure.sendMail(any(), emailBelowRetryLimit.emailId) } just Runs
+        every { objectMapper.readValue(emailBelowRetryLimit.payload, Email::class.java) } returns Email("", "", "", Priority.NORMAL, "")
+        emailService.sendExistingEmail(emailBelowRetryLimit)
+
+        assertNull(outboxEmailRepository.findById(emailAboveRetryLimit.id))
+        assertNotNull(outboxEmailRepository.findById(emailBelowRetryLimit.id))
     }
 
     @Test
