@@ -59,6 +59,11 @@ class EmailService(
 
             if (outboxEmail.maxNumberOfRetriesReached()) {
                 LOG.error("Failed to send email with id ${outboxEmail.id} after ${outboxEmail.retries} retries. Giving up.")
+
+                if (outboxEmail.priority === Priority.NORMAL) {
+                    emailRepository.deleteNormalPriorityEmail(outboxEmail.id)
+                    LOG.info("Deleted email with id ${outboxEmail.id} and normal priority from outbox")
+                }
             }
         }
 

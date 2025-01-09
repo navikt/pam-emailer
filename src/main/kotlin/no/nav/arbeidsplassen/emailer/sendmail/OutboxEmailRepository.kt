@@ -187,5 +187,23 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
         jdbcTemplate.update(sql, params)
     }
 
+    fun deleteNormalPriorityEmail(id: UUID) {
+        var sql = """
+            DELETE 
+            FROM outbox_email
+            WHERE id = :id
+            AND status = :failed_status
+            AND (priority = :normal_priority AND retries >= :max_retries_normal_priority)
+        """
+
+        val params = MapSqlParameterSource()
+            .addValue("id", id)
+            .addValue("failed_status", Status.FAILED.toString())
+            .addValue("normal_priority", Priority.NORMAL.value)
+            .addValue("max_retries_normal_priority", MAX_RETRIES_NORMAL_PRIORITY_EMAIL)
+
+        jdbcTemplate.update(sql, params)
+    }
+
 }
 
