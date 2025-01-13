@@ -60,6 +60,10 @@ data class OutboxEmail(
             Priority.NORMAL -> retries >= MAX_RETRIES_NORMAL_PRIORITY_EMAIL
         }
     }
+
+    fun shouldBeDeleted(): Boolean {
+        return maxNumberOfRetriesReached() && priority == Priority.NORMAL
+    }
 }
 
 enum class Status {
