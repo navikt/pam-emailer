@@ -14,6 +14,7 @@ class EmailService(
     private val emailServiceAzure: EmailServiceAzure,
     private val objectMapper: ObjectMapper,
     private val emailQuota: EmailQuota,
+    private val metrics: Metrics,
 ) {
     companion object {
         private val LOG = LoggerFactory.getLogger(EmailService::class.java)
@@ -35,6 +36,7 @@ class EmailService(
                 outboxEmail.failedToSend()
 
                 LOG.warn("Failed to send email with id $emailId immediately")
+                metrics.failedToSendEmail()
             }
         } else {
             LOG.info("No quota left for sending email with id $emailId immediately")
@@ -55,7 +57,9 @@ class EmailService(
             LOG.info("Successfully sent email with id ${outboxEmail.id}")
         } catch (e: SendMailException) {
             outboxEmail.failedToSend()
+
             LOG.warn("Failed to send email with id ${outboxEmail.id}")
+            metrics.failedToSendEmail()
 
             if (outboxEmail.maxNumberOfRetriesReached()) {
                 LOG.error("Failed to send email with id ${outboxEmail.id} after ${outboxEmail.retries} retries. Giving up.")
