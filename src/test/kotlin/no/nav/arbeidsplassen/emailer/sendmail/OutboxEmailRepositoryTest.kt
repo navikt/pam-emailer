@@ -220,7 +220,8 @@ class OutboxEmailRepositoryTest : PostgresTestDatabase() {
         val emailServiceAzure = mockk<EmailServiceAzure>()
         val objectMapper = mockk<ObjectMapper>()
         val emailQuota = mockk<EmailQuota>()
-        val emailService = EmailService(outboxEmailRepository, emailServiceAzure, objectMapper, emailQuota)
+        val metrics = mockk<Metrics>(relaxed = true)
+        val emailService = EmailService(outboxEmailRepository, emailServiceAzure, objectMapper, emailQuota, metrics)
 
         val emailAboveRetryLimit = OutboxEmail.newOutboxEmail(UUID.randomUUID().toString(), Priority.NORMAL, "payload").apply {
             retries = MAX_RETRIES_NORMAL_PRIORITY_EMAIL
