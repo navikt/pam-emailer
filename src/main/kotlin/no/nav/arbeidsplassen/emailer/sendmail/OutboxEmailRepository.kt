@@ -25,6 +25,14 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
         )
     }
 
+    private val countsRowMapper = RowMapper<EmailCounts> { rs, _ ->
+        EmailCounts(
+            sentLastHour = rs.getInt("sent_last_hour_count"),
+            pending = rs.getInt("pending_count"),
+            failed = rs.getInt("failed_count")
+        )
+    }
+
     fun create(outboxEmail: OutboxEmail) {
         val sql = """
             INSERT INTO outbox_email (
@@ -171,6 +179,24 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
         return jdbcTemplate.queryForObject(sql, params, Int::class.java)!!
     }
 
+    fun getEmailCounts(): EmailCounts {
+        val sql = """
+            SELECT
+                (SELECT count(*) FROM outbox_email WHERE updated_at > :one_hour_ago AND status = :sent_status) as sent_last_hour_count,
+                (SELECT count(*) FROM outbox_email WHERE status = :pending_status) as pending_count,
+                (SELECT count(*) FROM outbox_email WHERE status = :failed_status) as failed_count
+        """;
+
+        val oneHourAgo = OffsetDateTime.now().minusHours(1)
+        val params = MapSqlParameterSource()
+            .addValue("one_hour_ago", oneHourAgo)
+            .addValue("sent_status", Status.SENT.toString())
+            .addValue("pending_status", Status.PENDING.toString())
+            .addValue("failed_status", Status.FAILED.toString())
+
+        return jdbcTemplate.queryForObject(sql, params, countsRowMapper)!!
+    }
+
     fun deleteEmailsOlderThanAnHour() {
         val oneHourAgo = OffsetDateTime.now().minusHours(1)
         val sql = """
@@ -202,3 +228,8 @@ class OutboxEmailRepository(val jdbcTemplate: NamedParameterJdbcTemplate) {
 
 }
 
+data class EmailCounts(
+    val sentLastHour: Int,
+    val pending: Int,
+    val failed: Int,
+)
