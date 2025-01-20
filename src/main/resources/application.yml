@@ -9,7 +9,7 @@ spring:
       maximum-pool-size: ${db.connection.pool.size:5}
 
 logging:
-  config: src/main/resources/logback-prod.xml
+  config: classpath:logback-prod.xml
 
 management:
   endpoints.web.exposure.include: prometheus
