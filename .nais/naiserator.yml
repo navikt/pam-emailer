@@ -39,7 +39,7 @@ spec:
         - id: elastic
   prometheus:
     enabled: true
-    path: /prometheus
+    path: /actuator/prometheus
   ingresses:
   {{#each ingress as |url|}}
       - {{url}}
