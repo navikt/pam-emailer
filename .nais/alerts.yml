@@ -9,11 +9,49 @@ spec:
   groups:
     - name: "teampam pam-emailer alerts"
       rules:
+        - alert: "[pam-emailer] Ingen e-poster sendt siste time"
+          # hour() returns in UTC, so it will check between 06:00 and 22:00
+          expr: (max(emailer_current_email_counts{type="sent_last_hour"}) and ON() (hour() >= 5 and hour() < 21)) == 0
+          for: 5m
+          annotations:
+            action: "Sjekk metrikker/logger til pam-emailer om det er veldig mye i kø eller noe feiler"
+          labels:
+            namespace: "teampam"
+            severity: warning
+
+        - alert: "[pam-emailer] Veldig mange ventende e-poster"
+          # Tops at just below 5000 right now
+          expr: max(emailer_current_email_counts{type="pending"}) > 10000
+          for: 5m
+          annotations:
+            action: "Sjekk metrikker/logger til pam-emailer hvorfor det er så mye i kø"
+          labels:
+            namespace: "teampam"
+            severity: warning
+
+        - alert: "[pam-emailer] Mange ventende e-postutsendelser pga feil"
+          expr: max(emailer_current_email_counts{type="failed"}) > 0 and max(emailer_current_email_counts{type="failed"}) < 100
+          for: 30m
+          annotations:
+            action: "Sjekk logger til pam-emailer hvorfor e-postutsendelser feiler"
+          labels:
+            namespace: "teampam"
+            severity: warning
+
+        - alert: "[pam-emailer] Veldig mange ventende e-postutsendelser pga feil"
+          expr: max(emailer_current_email_counts{type="failed"}) >= 100
+          for: 5m
+          annotations:
+            action: "Sjekk logger til pam-emailer hvorfor e-postutsendelser feiler"
+          labels:
+            namespace: "teampam"
+            severity: critical
+
         - alert: "[pam-emailer] Mye feil i loggene"
           expr: (100 * sum(rate(log_messages_errors{app="pam-emailer"}[3m])) / sum(rate(log_messages_total{app="pam-emailer"}[3m]))) > 1
           for: 3m
           annotations:
-            action: "Sjekk loggene / secure logs til pam-emailer i teampam for å se hvorfor det er så mye feil"
+            action: "Sjekk loggene/secure logs til pam-emailer i teampam for å se hvorfor det er så mye feil"
           labels:
             namespace: "teampam"
             severity: critical
