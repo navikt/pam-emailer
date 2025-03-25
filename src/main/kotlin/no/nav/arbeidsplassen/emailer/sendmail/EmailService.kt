@@ -48,25 +48,25 @@ class EmailService(
     @Transactional
     fun sendExistingEmail(outboxEmail: OutboxEmail) {
         try {
-            LOG.info("Sending email with id ${outboxEmail.id}. Status: ${outboxEmail.status}. Try number: ${outboxEmail.tryNumber()}.")
+            LOG.info("Sending email with id ${outboxEmail.emailId}. Status: ${outboxEmail.status}. Try number: ${outboxEmail.tryNumber()}.")
 
             val email = objectMapper.readValue(outboxEmail.payload, Email::class.java)
             emailServiceAzure.sendMail(email, outboxEmail.emailId)
             outboxEmail.successfullySent()
 
-            LOG.info("Successfully sent email with id ${outboxEmail.id}")
+            LOG.info("Successfully sent email with id ${outboxEmail.emailId}")
         } catch (e: SendMailException) {
             outboxEmail.failedToSend()
 
-            LOG.warn("Failed to send email with id ${outboxEmail.id}")
+            LOG.warn("Failed to send email with id ${outboxEmail.emailId}")
             metrics.failedToSendEmail()
 
             if (outboxEmail.maxNumberOfRetriesReached()) {
-                LOG.error("Failed to send email with id ${outboxEmail.id} after ${outboxEmail.retries} retries. Giving up.")
+                LOG.error("Failed to send email with id ${outboxEmail.emailId} after ${outboxEmail.retries} retries. Giving up.")
 
                 if (outboxEmail.shouldBeDeleted()) {
                     emailRepository.deleteEmail(outboxEmail)
-                    LOG.info("Deleted email with id ${outboxEmail.id} and normal priority from outbox")
+                    LOG.info("Deleted email with id ${outboxEmail.emailId} and normal priority from outbox")
                 }
             }
         }
