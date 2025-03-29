@@ -11,6 +11,7 @@ import com.microsoft.graph.models.Message
 import com.microsoft.graph.models.Recipient
 import com.microsoft.graph.models.odataerrors.ODataError
 import com.microsoft.graph.serviceclient.GraphServiceClient
+import com.microsoft.graph.users.item.messages.MessagesRequestBuilder
 import com.microsoft.graph.users.item.sendmail.SendMailPostRequestBody
 import no.nav.arbeidsplassen.emailer.sendmail.Email
 import org.slf4j.LoggerFactory
@@ -42,6 +43,65 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties) {
             .readTimeout(Duration.of(60, ChronoUnit.SECONDS))
             .build()
     )
+
+    fun deleteAllEmailsInAccount() {
+        val totalEmailCount = getTotalEmailCount()
+
+        if (totalEmailCount == 0) {
+            return
+        }
+
+        LOG.info("Found $totalEmailCount emails that will be deleted")
+
+        var deletedEmailsCount = 0
+        while (true) {
+            val emails = getEmails()
+
+            if (emails.size == 0) {
+                return
+            }
+
+            emails.forEach { email ->
+                deleteEmail(email.id)
+                deletedEmailsCount++
+            }
+
+            LOG.info("$deletedEmailsCount of $totalEmailCount emails deleted")
+        }
+    }
+
+    private fun getTotalEmailCount() = graphClient.users()
+        .byUserId(aadProperties.userPrincipal)
+        .mailFolders()
+        .get()
+        .value
+        .sumOf { it.totalItemCount }
+
+    private fun getEmails() =
+        graphClient.users()
+            .byUserId(aadProperties.userPrincipal)
+            .messages()[{ requestConfiguration: MessagesRequestBuilder.GetRequestConfiguration ->
+            requestConfiguration.queryParameters.select = arrayOf("id")
+            requestConfiguration.queryParameters.top = 100
+        }]
+            .value
+
+    private fun deleteEmail(emailId: String) {
+        try {
+            graphClient.users()
+                .byUserId(aadProperties.userPrincipal)
+                .messages()
+                .byMessageId(emailId)
+                .permanentDelete()
+                .post()
+        } catch (e: ODataError) {
+            LOG.error("Failed to delete email with id $emailId. Response code ${e.responseStatusCode}. Code: ${e.error.code}. Message ${e.message}.", e)
+            throw e
+        } catch (e: Exception) {
+            LOG.error("Failed to delete email with $emailId. Unknown exception.", e)
+            throw e
+        }
+    }
 
     fun sendMail(email: Email, id: String) {
         val emailRequestBody = createEmailRequestBody(email)
@@ -77,6 +137,7 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties) {
                 contentBytes = it.content.toByteArray()
             } }
         }
+
         return SendMailPostRequestBody().apply {
             this.message = message
             saveToSentItems = false
