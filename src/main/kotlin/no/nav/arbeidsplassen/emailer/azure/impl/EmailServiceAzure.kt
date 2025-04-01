@@ -107,11 +107,11 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties) {
         val emailRequestBody = createEmailRequestBody(email)
 
         try {
-            graphClient.users()
+            val response = graphClient.users()
                 .byUserId(aadProperties.userPrincipal)
                 .sendMail()
                 .post(emailRequestBody)
-
+            LOG.warn("Email with id $id sent. Response ${response}.")
         } catch (e: ODataError) {
             SECURE_LOG.warn("Failed to send email with $id. Response code ${e.responseStatusCode}. Code: ${e.error.code}. Message ${e.message}.", e)
 
