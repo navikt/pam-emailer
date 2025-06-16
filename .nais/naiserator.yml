@@ -30,8 +30,6 @@ spec:
   vault:
     enabled: false
   webproxy: false
-  secureLogs:
-    enabled: true
   observability:
     logging:
       destinations:
@@ -65,6 +63,9 @@ spec:
         - application: pam-survey-api
         - application: pam-aduser
     outbound:
+      rules:
+        - application: logging
+          namespace: nais-system
       external:
         - host: login.microsoftonline.com
           ports:

@@ -15,6 +15,8 @@ import com.microsoft.graph.users.item.messages.MessagesRequestBuilder
 import com.microsoft.graph.users.item.sendmail.SendMailPostRequestBody
 import no.nav.arbeidsplassen.emailer.sendmail.Email
 import org.slf4j.LoggerFactory
+import org.slf4j.Marker
+import org.slf4j.MarkerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import java.time.Duration
@@ -25,7 +27,7 @@ import java.time.temporal.ChronoUnit
 class EmailServiceAzure(private val aadProperties: AzureADProperties) {
     companion object {
         private val LOG = LoggerFactory.getLogger(EmailServiceAzure::class.java)
-        private val SECURE_LOG = LoggerFactory.getLogger(EmailServiceAzure::class.java.name + ".secure")
+        private val secureLogsMarker: Marker = MarkerFactory.getMarker("TEAM_LOGS")
     }
 
     private final val graphClient = GraphServiceClient(
@@ -113,7 +115,7 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties) {
                 .post(emailRequestBody)
 
         } catch (e: ODataError) {
-            SECURE_LOG.warn("Failed to send email with $id. Response code ${e.responseStatusCode}. Code: ${e.error.code}. Message ${e.message}.", e)
+            LOG.warn(secureLogsMarker, "Failed to send email with $id. Response code ${e.responseStatusCode}. Code: ${e.error.code}. Message ${e.message}.", e)
 
             throw SendMailException(message = "Failed to send email with $id", status = HttpStatus.valueOf(e.responseStatusCode))
         } catch (e: Exception) {
