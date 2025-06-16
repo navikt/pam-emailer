@@ -51,7 +51,7 @@ spec:
           expr: (100 * sum(rate(log_messages_errors{app="pam-emailer"}[3m])) / sum(rate(log_messages_total{app="pam-emailer"}[3m]))) > 1
           for: 3m
           annotations:
-            action: "Sjekk loggene/secure logs til pam-emailer i teampam for å se hvorfor det er så mye feil"
+            action: "Sjekk loggene/Team Logs til pam-emailer i teampam for å se hvorfor det er så mye feil"
           labels:
             namespace: "teampam"
             severity: critical
