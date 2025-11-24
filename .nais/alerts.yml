@@ -2,9 +2,9 @@ apiVersion: "monitoring.coreos.com/v1"
 kind: "PrometheusRule"
 metadata:
   name: "emailer-alerts"
-  namespace: "teampam"
+  namespace: "arbeidsplassen"
   labels:
-    team: "teampam"
+    team: "arbeidsplassen"
 spec:
   groups:
     - name: "teampam pam-emailer alerts"
@@ -16,7 +16,7 @@ spec:
           annotations:
             action: "Sjekk metrikker/logger til pam-emailer om det er veldig mye i kø eller noe feiler"
           labels:
-            namespace: "teampam"
+            namespace: "arbeidsplassen"
             severity: warning
 
         - alert: "[pam-emailer] Veldig mange ventende e-poster"
@@ -26,7 +26,7 @@ spec:
           annotations:
             action: "Sjekk metrikker/logger til pam-emailer hvorfor det er så mye i kø"
           labels:
-            namespace: "teampam"
+            namespace: "arbeidsplassen"
             severity: warning
 
         - alert: "[pam-emailer] Mange ventende e-postutsendelser pga feil"
@@ -35,7 +35,7 @@ spec:
           annotations:
             action: "Sjekk logger til pam-emailer hvorfor e-postutsendelser feiler"
           labels:
-            namespace: "teampam"
+            namespace: "arbeidsplassen"
             severity: warning
 
         - alert: "[pam-emailer] Veldig mange ventende e-postutsendelser pga feil"
@@ -44,7 +44,7 @@ spec:
           annotations:
             action: "Sjekk logger til pam-emailer hvorfor e-postutsendelser feiler"
           labels:
-            namespace: "teampam"
+            namespace: "arbeidsplassen"
             severity: critical
 
         - alert: "[pam-emailer] Mye feil i loggene"
@@ -53,5 +53,5 @@ spec:
           annotations:
             action: "Sjekk loggene/Team Logs til pam-emailer i teampam for å se hvorfor det er så mye feil"
           labels:
-            namespace: "teampam"
+            namespace: "arbeidsplassen"
             severity: critical
