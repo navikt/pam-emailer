@@ -31,8 +31,8 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly("org.postgresql:postgresql")
-    implementation("net.javacrumbs.shedlock:shedlock-spring:6.0.2")
-    implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.0.2")
+    implementation("net.javacrumbs.shedlock:shedlock-spring:6.10.0")
+    implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.10.0")
 
     implementation("com.azure:azure-identity:1.15.4")
     implementation("com.microsoft.graph:microsoft-graph:6.33.0")
