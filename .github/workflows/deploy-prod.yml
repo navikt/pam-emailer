@@ -1,14 +1,22 @@
 name: deploy-prod
+run-name: deploy-prod ${{ inputs.version || github.event.release.tag_name }}
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag to deploy (for example: 26.061.102232)'
+        required: true
+        type: string
   release:
     types: [published]
 
 jobs:
   call-workflow:
-    uses: navikt/pam-deploy/.github/workflows/deploy-prod.yml@v7
+    uses: navikt/pam-deploy/.github/workflows/deploy-prod.yml@v9
     permissions:
       contents: write
       id-token: write
     with:
       NAIS_RESOURCE: .nais/naiserator.yml
       NAIS_VARS: .nais/naiserator-prod.json
+      VERSION_TAG: ${{ inputs.version }}

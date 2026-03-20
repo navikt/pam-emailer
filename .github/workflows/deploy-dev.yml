@@ -1,5 +1,6 @@
 name: build-deploy-dev
 on:
+  workflow_dispatch:
   push:
     paths-ignore:
       - "**.md"
@@ -8,6 +9,8 @@ on:
       - "CODEOWNERS"
       - ".nais/alerts.yml"
       - ".github/workflows/alerts.yml"
+      - ".github/dependabot.yml"
+      - ".github/workflows/dependabot-auto-merge.yml"
     branches:
       - '**'
 jobs:
@@ -18,11 +21,9 @@ jobs:
       security-events: write
       id-token: write
     if: "(github.ref_name == 'main') || contains(github.event.head_commit.message, 'deploy:dev')"
-    uses: navikt/pam-deploy/.github/workflows/deploy-dev.yml@v7
+    uses: navikt/pam-deploy/.github/workflows/deploy-dev.yml@v9
     with:
       JAVA_VERSION: 21
       NAIS_RESOURCE: .nais/naiserator.yml
       NAIS_VARS: .nais/naiserator-dev.json
       SKIP_DRAFT_RELEASE: ${{ github.ref_name != 'main' }}
-    secrets:
-      NAIS_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
