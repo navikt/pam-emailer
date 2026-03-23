@@ -12,10 +12,10 @@ spec:
   port: 8080
   liveness:
     path: /internal/isAlive
-    initialDelay: 30
+    initialDelay: 45
   readiness:
     path: /internal/isReady
-    initialDelay: 30
+    initialDelay: 45
   replicas:
     min: 2
     max: 4
