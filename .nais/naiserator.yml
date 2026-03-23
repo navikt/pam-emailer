@@ -12,17 +12,16 @@ spec:
   port: 8080
   liveness:
     path: /internal/isAlive
-    initialDelay: 45
+    initialDelay: 60
   readiness:
     path: /internal/isReady
-    initialDelay: 45
+    initialDelay: 60
   replicas:
     min: 2
     max: 4
     cpuThresholdPercentage: 50
   resources:
     limits:
-      cpu: 1000m
       memory: 1024Mi
     requests:
       cpu: 200m
