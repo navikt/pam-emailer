@@ -1,7 +1,7 @@
 plugins {
     kotlin("jvm") version "2.3.20"
     kotlin("plugin.spring") version "2.3.20"
-    id("org.springframework.boot") version "3.5.11"
+    id("org.springframework.boot") version "3.5.12"
     id("io.spring.dependency-management") version "1.1.7"
 }
 
@@ -31,8 +31,8 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly("org.postgresql:postgresql")
-    implementation("net.javacrumbs.shedlock:shedlock-spring:6.10.0")
-    implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.10.0")
+    implementation("net.javacrumbs.shedlock:shedlock-spring:7.7.0")
+    implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.7.0")
 
     implementation("com.azure:azure-identity:1.18.2")
     implementation("com.microsoft.graph:microsoft-graph:6.62.0")
