@@ -1,4 +1,10 @@
 version: 2
+registries:
+  maven-github:
+    type: maven-repository
+    url: https://github-package-registry-mirror.gc.nav.no/cached/maven-release
+    username: x-access-token
+    password: no-secret-required
 updates:
   - package-ecosystem: "gradle"
     directory: "/"
@@ -6,6 +12,8 @@ updates:
       interval: "daily"
       time: "06:30"
       timezone: "Europe/Oslo"
+    registries:
+      - "maven-github"
     cooldown:
       default-days: 7
     open-pull-requests-limit: 20
@@ -15,13 +23,3 @@ updates:
       - dependency-name: "*"
         update-types:
           - "version-update:semver-major"
-
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "daily"
-      time: "06:30"
-      timezone: "Europe/Oslo"
-    open-pull-requests-limit: 20
-    cooldown:
-      default-days: 7
