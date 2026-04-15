@@ -5,10 +5,11 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
 }
 
-
-
 version = "0.1"
 group = "no.nav.arbeidsplassen.emailer"
+
+// Remove when bumping to Spring v4
+ext["tomcat.version"] = "10.1.54"
 
 repositories {
     mavenCentral()
