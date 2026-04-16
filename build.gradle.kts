@@ -8,7 +8,7 @@ plugins {
 version = "0.1"
 group = "no.nav.arbeidsplassen.emailer"
 
-// Remove when bumping to Spring v4
+// Remove when bumping to Spring 3.5.14, due 23.04.26 https://github.com/spring-projects/spring-boot/milestone/421
 ext["tomcat.version"] = "10.1.54"
 
 repositories {
