@@ -35,7 +35,7 @@ dependencies {
     implementation("net.javacrumbs.shedlock:shedlock-spring:7.7.0")
     implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.7.0")
 
-    implementation("com.azure:azure-identity:1.18.2")
+    implementation("com.azure:azure-identity:1.18.3")
     implementation("com.microsoft.graph:microsoft-graph:6.62.0")
 
     implementation("org.codehaus.janino:janino:3.1.12")
