@@ -8,8 +8,10 @@ plugins {
 version = "0.1"
 group = "no.nav.arbeidsplassen.emailer"
 
-// Remove when bumping to Spring 3.5.14, due 23.04.26 https://github.com/spring-projects/spring-boot/milestone/421
-ext["tomcat.version"] = "10.1.54"
+// Pinned new versions for critical vulnerabilities
+// Remove when upgrading Spring Boot above 3.5.14
+extra["tomcat.version"] = "10.1.55"
+extra["netty.version"] = "4.1.133.Final"
 
 repositories {
     mavenCentral()
