@@ -1,6 +1,6 @@
 package no.nav.arbeidsplassen.emailer.sendmail
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import no.nav.arbeidsplassen.emailer.azure.impl.EmailServiceAzure
 import no.nav.arbeidsplassen.emailer.azure.impl.SendMailException
 import org.slf4j.LoggerFactory
