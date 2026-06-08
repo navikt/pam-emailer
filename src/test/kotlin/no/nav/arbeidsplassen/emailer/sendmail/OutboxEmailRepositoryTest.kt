@@ -1,6 +1,6 @@
 package no.nav.arbeidsplassen.emailer.sendmail
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
