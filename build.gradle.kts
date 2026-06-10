@@ -8,6 +8,11 @@ plugins {
 version = "0.1"
 group = "no.nav.arbeidsplassen.emailer"
 
+// Pinned new versions for critical vulnerabilities
+// Remove when upgrading Spring Boot above 4.0.6
+extra["tomcat.version"] = "11.0.22"
+extra["netty.version"] = "4.2.15.Final"
+
 repositories {
     mavenCentral()
 }
