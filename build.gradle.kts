@@ -39,7 +39,7 @@ dependencies {
     implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.7.0")
 
     implementation("com.azure:azure-identity:1.18.4")
-    implementation("com.microsoft.graph:microsoft-graph:6.63.0")
+    implementation("com.microsoft.graph:microsoft-graph:6.67.0")
 
     implementation("org.codehaus.janino:janino:3.1.12")
     implementation("net.logstash.logback:logstash-logback-encoder:8.1")
