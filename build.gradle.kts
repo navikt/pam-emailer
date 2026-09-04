@@ -8,6 +8,9 @@ plugins {
 version = "0.1"
 group = "no.nav.arbeidsplassen.emailer"
 
+// Force upgrade to avoid vulnerability from 11.0.22, can be removed when default version is higher than 11.0.25
+extra["tomcat.version"] = "11.0.25"
+
 repositories {
     mavenCentral()
 }
