@@ -72,9 +72,9 @@ class EmailQuotaTest {
 
     @Test
     fun `Will return count of emails left to send, when there are less than batch size emails left to send`() {
-        every { emailRepository.countEmailsSentInLastHour() } returns MAX_EMAILS_PER_HOUR - PENDING_EMAIL_BATCH_SIZE + 5
+        every { emailRepository.countEmailsSentInLastHour() } returns MAX_EMAILS_PER_HOUR - 1
 
-        assertEquals(PENDING_EMAIL_BATCH_SIZE - 5, emailQuota.getPendingEmailsMaxBatchSize().numberOfEmails)
+        assertEquals(1, emailQuota.getPendingEmailsMaxBatchSize().numberOfEmails)
     }
 
     @Test
@@ -111,9 +111,9 @@ class EmailQuotaTest {
 
     @Test
     fun `Will return count of emails left to retry, when there are less than batch size emails left to retry`() {
-        every { emailRepository.countEmailsSentInLastHour() } returns MAX_EMAILS_PER_HOUR - PENDING_EMAIL_BATCH_SIZE + 5
+        every { emailRepository.countEmailsSentInLastHour() } returns MAX_EMAILS_PER_HOUR - 1
 
-        assertEquals(PENDING_EMAIL_BATCH_SIZE - 5, emailQuota.getRetryFailedEmailsMaxBatchSize().numberOfEmails)
+        assertEquals(1, emailQuota.getRetryFailedEmailsMaxBatchSize().numberOfEmails)
     }
 
     @Test
