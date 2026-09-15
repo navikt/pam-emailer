@@ -2,6 +2,13 @@ spring:
   application:
     name: pam-emailer
 
+  task:
+    scheduling:
+      pool:
+        # Defaults to 1. Pending/retry/delete jobs share this pool, so a slow send
+        # would otherwise delay the other jobs and cause pending ticks to be skipped.
+        size: 2
+
   datasource:
     url: ${db.jdbc.url}
     hikari:

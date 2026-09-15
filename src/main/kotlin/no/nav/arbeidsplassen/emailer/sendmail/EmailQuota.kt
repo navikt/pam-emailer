@@ -6,18 +6,19 @@ import kotlin.math.min
 @Service
 class EmailQuota(private val emailRepository: OutboxEmailRepository) {
     companion object {
-        const val MAX_EMAILS_PER_HOUR = 850
+        // Limit is actually 4000 per hour but we've had issues at 2850
+        const val MAX_EMAILS_PER_HOUR = 1900
         const val HIGH_PRIORITY_EMAIL_BUFFER = 200
 
-        // 2 every 8 seconds = max 900 per hour, capped at 850 by hourly quota
-        const val PENDING_EMAIL_BATCH_SIZE = 2
-        const val PENDING_EMAIL_CRON = "*/8 * * * * *"
+        // 5 every 10 seconds = 1800 per hour
+        const val PENDING_EMAIL_BATCH_SIZE = 5
+        const val PENDING_EMAIL_CRON = "*/10 * * * * *"
         const val PENDING_EMAIL_LOCK_AT_LEAST_FOR = "PT8S"
         const val PENDING_EMAIL_LOCK_AT_MOST_FOR = "PT5M"
 
-        // 2 every 8 seconds = max 900 per hour, capped at 850 by hourly quota
-        const val RETRY_EMAIL_BATCH_SIZE = 2
-        const val RETRY_EMAIL_CRON = "*/8 * * * * *"
+        // 80 every 5 minutes = 960 per hour
+        const val RETRY_EMAIL_BATCH_SIZE = 80
+        const val RETRY_EMAIL_CRON = "0 */5 * * * *"
         const val RETRY_EMAIL_LOCK_AT_LEAST_FOR = "PT4M"
         const val RETRY_EMAIL_LOCK_AT_MOST_FOR = "PT20M"
 

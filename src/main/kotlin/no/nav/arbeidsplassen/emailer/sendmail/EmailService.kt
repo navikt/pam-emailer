@@ -26,7 +26,7 @@ class EmailService(
 
         if (emailQuota.canSendEmailNow(outboxEmail)) {
             try {
-                LOG.info("Sending email with id $emailId immediately")
+                LOG.info("Sending email with id $emailId immediately, priority ${email.priority}")
 
                 emailServiceAzure.sendMail(email, emailId)
                 outboxEmail.successfullySent()

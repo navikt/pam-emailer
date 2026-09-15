@@ -47,7 +47,7 @@ class SendMailController(private val emailService: EmailService) {
             attachments = emailDto.attachments.map { Attachment(it.name, it.contentType, Base64.Default.decode(it.base64Content).decodeToString()) }
         )
 
-        emailService.sendNewEmail(email, id, Priority.NORMAL)
+        emailService.sendNewEmail(email, id, email.priority)
 
         return ResponseEntity.status(HttpStatus.CREATED).build()
     }
