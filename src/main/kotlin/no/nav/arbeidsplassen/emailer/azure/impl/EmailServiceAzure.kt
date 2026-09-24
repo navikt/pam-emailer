@@ -151,6 +151,9 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties) {
             throw SendMailException(message = "Failed to send email with $id", e = e)
         }
 
+        val response = nativeResponseHandler.value as? Response
+            ?: throw SendMailException(message = "Failed to send email with $id. No response received from Azure.")
+
         response.use {
             handleSendMailResponse(it, id, email.recipient)
         }
