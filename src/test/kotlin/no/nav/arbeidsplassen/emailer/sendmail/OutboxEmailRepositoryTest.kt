@@ -235,11 +235,11 @@ class OutboxEmailRepositoryTest : PostgresTestDatabase() {
         outboxEmailRepository.create(emailAboveRetryLimit)
         outboxEmailRepository.create(emailBelowRetryLimit)
 
-        every { emailServiceAzure.sendMail(any(), emailAboveRetryLimit.emailId) } throws SendMailException("Failed to send email")
+        every { emailServiceAzure.sendEmailWithExtendedLogging(any(), emailAboveRetryLimit.emailId) } throws SendMailException("Failed to send email")
         every { objectMapper.readValue(emailAboveRetryLimit.payload, Email::class.java) } returns Email("", "", "", Priority.NORMAL, "")
         emailService.sendExistingEmail(emailAboveRetryLimit)
 
-        every { emailServiceAzure.sendMail(any(), emailBelowRetryLimit.emailId) } just Runs
+        every { emailServiceAzure.sendEmailWithExtendedLogging(any(), emailBelowRetryLimit.emailId) } just Runs
         every { objectMapper.readValue(emailBelowRetryLimit.payload, Email::class.java) } returns Email("", "", "", Priority.NORMAL, "")
         emailService.sendExistingEmail(emailBelowRetryLimit)
 

@@ -28,7 +28,7 @@ class EmailService(
             try {
                 LOG.info("Sending email with id $emailId immediately, priority ${email.priority}")
 
-                emailServiceAzure.sendMail(email, emailId)
+                emailServiceAzure.sendEmailWithExtendedLogging(email, emailId)
                 outboxEmail.successfullySent()
 
                 LOG.info("Successfully sent email with id $emailId immediately")
@@ -51,7 +51,7 @@ class EmailService(
             LOG.info("Sending email with id ${outboxEmail.emailId}. Status: ${outboxEmail.status}. Try number: ${outboxEmail.tryNumber()}.")
 
             val email = objectMapper.readValue(outboxEmail.payload, Email::class.java)
-            emailServiceAzure.sendMail(email, outboxEmail.emailId)
+            emailServiceAzure.sendEmailWithExtendedLogging(email, outboxEmail.emailId)
             outboxEmail.successfullySent()
 
             LOG.info("Successfully sent email with id ${outboxEmail.emailId}")
