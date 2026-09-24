@@ -13,7 +13,10 @@ import com.microsoft.graph.models.odataerrors.ODataError
 import com.microsoft.graph.serviceclient.GraphServiceClient
 import com.microsoft.graph.users.item.messages.MessagesRequestBuilder
 import com.microsoft.graph.users.item.sendmail.SendMailPostRequestBody
+import com.microsoft.kiota.NativeResponseHandler
+import com.microsoft.kiota.ResponseHandlerOption
 import no.nav.arbeidsplassen.emailer.sendmail.Email
+import okhttp3.Response
 import org.slf4j.LoggerFactory
 import org.slf4j.Marker
 import org.slf4j.MarkerFactory
@@ -122,6 +125,63 @@ class EmailServiceAzure(private val aadProperties: AzureADProperties) {
             LOG.error("Failed to send email with $id. Unknown exception.", e)
 
             throw SendMailException(message = "Failed to send email with $id", e = e)
+        }
+    }
+
+    fun sendEmailWithExtendedLogging(email: Email, id: String) {
+        val emailRequestBody = createEmailRequestBody(email)
+
+        val nativeResponseHandler = NativeResponseHandler()
+
+        try {
+            // A custom response handler makes the SDK skip its own status check, so we must check it ourselves
+            graphClient.users()
+                .byUserId(aadProperties.userPrincipal)
+                .sendMail()
+                .post(emailRequestBody) {
+                    it.options.add(ResponseHandlerOption().apply {
+                        responseHandler = nativeResponseHandler
+                    })
+                }
+        } catch (e: SendMailException) {
+            throw e
+        } catch (e: Exception) {
+            LOG.error("Failed to send email with $id. Unknown exception.", e)
+
+            throw SendMailException(message = "Failed to send email with $id", e = e)
+        }
+
+        response.use {
+            handleSendMailResponse(it, id, email.recipient)
+        }
+    }
+
+    private fun handleSendMailResponse(response: Response, id: String, recipient: String) {
+        val statusCode = response.code
+        val traceInfo = "Email id: $id. Status: $statusCode. " +
+                "request-id: ${response.header("request-id")}. " +
+                "client-request-id: ${response.header("client-request-id")}. " +
+                "Date: ${response.header("Date")}."
+        val secureTraceInfo = "$traceInfo Recipient: $recipient."
+
+        when {
+            statusCode == HttpStatus.ACCEPTED.value() -> {
+                LOG.info("Email accepted by Azure. $traceInfo")
+                LOG.info(secureLogsMarker, "Email accepted by Azure. $secureTraceInfo")
+            }
+            response.isSuccessful -> {
+                LOG.error("Email sent to Azure, but got unexpected status (expected 202). $traceInfo")
+                LOG.error(secureLogsMarker, "Email sent to Azure, but got unexpected status (expected 202). $secureTraceInfo")
+            }
+            else -> {
+                LOG.error("Failed to send email. $traceInfo")
+                LOG.error(secureLogsMarker, "Failed to send email. $secureTraceInfo Response body: ${response.body?.string()}")
+
+                throw SendMailException(
+                    message = "Failed to send email with $id",
+                    status = HttpStatus.resolve(statusCode) ?: HttpStatus.INTERNAL_SERVER_ERROR
+                )
+            }
         }
     }
 
