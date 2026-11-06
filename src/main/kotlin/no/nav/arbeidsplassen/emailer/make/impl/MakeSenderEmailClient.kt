@@ -2,19 +2,85 @@ package no.nav.arbeidsplassen.emailer.make.impl
 
 import no.nav.arbeidsplassen.emailer.sendmail.Email
 import no.nav.arbeidsplassen.emailer.sendmail.EmailClient
+import no.nav.arbeidsplassen.emailer.sendmail.SendMailException
 import org.slf4j.LoggerFactory
+import org.slf4j.Marker
+import org.slf4j.MarkerFactory
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
+import org.springframework.web.client.RestClient
+import java.nio.charset.StandardCharsets
+import java.util.Base64
 
 @Service
-class MakeSenderEmailClient(private val properties: MakeSenderProperties) : EmailClient {
+class MakeSenderEmailClient(
+    private val properties: MakeSenderProperties,
+    restClientBuilder: RestClient.Builder,
+) : EmailClient {
     companion object {
         private val LOG = LoggerFactory.getLogger(MakeSenderEmailClient::class.java)
+        private val secureLogsMarker: Marker = MarkerFactory.getMarker("TEAM_LOGS")
     }
 
+    private val restClient: RestClient = restClientBuilder
+        .baseUrl(requireNotNull(properties.baseUrl) { "makesender.base-url must be configured" })
+        .defaultHeader(HttpHeaders.AUTHORIZATION, basicAuthHeader())
+        .build()
+
     override fun sendEmail(email: Email, id: String) {
-        // TODO: Build JSON body from Email and POST to
-        //  {baseUrl}/api/v1/{domain}/messages with Basic auth (userId:apiKey).
-        //  On non-2xx, throw SendMailException(status = ...).
-        LOG.error("MakeSenderEmailClient.sendEmail called for email with id $id (not yet implemented)")
+        // Attachments are not supported by the MakeSender integration and are ignored.
+        if (email.attachments.isNotEmpty()) {
+            LOG.warn("Email with id $id has ${email.attachments.size} attachment(s) which are not supported by MakeSender and will be ignored")
+        }
+
+        val body = buildRequestBody(email)
+
+        try {
+            restClient.post()
+                .uri("/api/v1/{domain}/messages", properties.domain)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .onStatus({ it.isError }) { _, response ->
+                    throw SendMailException(
+                        message = "Failed to send email with $id",
+                        status = HttpStatus.resolve(response.statusCode.value()) ?: HttpStatus.INTERNAL_SERVER_ERROR
+                    )
+                }
+                .toBodilessEntity()
+        } catch (e: SendMailException) {
+            LOG.warn("Failed to send email with $id. $e")
+            throw e
+        } catch (e: Exception) {
+            LOG.error("Failed to send email with $id. Unknown exception.", e)
+            throw SendMailException(message = "Failed to send email with $id", e = e)
+        }
+
+        LOG.info("Email accepted by MakeSender. Email id: $id")
+        LOG.info(secureLogsMarker, "Email accepted by MakeSender. Email id: $id. Recipient: ${email.recipient}")
+    }
+
+    private fun buildRequestBody(email: Email): Map<String, String> {
+        val body = mutableMapOf(
+            "from" to requireNotNull(properties.sender) { "makesender.sender must be configured" },
+            "to" to email.recipient.trim(),
+            "subject" to email.subject,
+        )
+
+        if (email.type.equals("html", ignoreCase = true)) {
+            body["html"] = email.content
+        } else {
+            body["text"] = email.content
+        }
+
+        return body
+    }
+
+    private fun basicAuthHeader(): String {
+        val credentials = "${properties.userId}:${properties.apiKey}"
+        val encoded = Base64.getEncoder().encodeToString(credentials.toByteArray(StandardCharsets.UTF_8))
+        return "Basic $encoded"
     }
 }
