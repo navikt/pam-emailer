@@ -27,7 +27,7 @@ management:
 
 makesender:
   base-url: ${MAKESENDER_BASE_URL:https://api.makesender.no}
-  domain: ${MAKESENDER_DOMAIN:arbeidsplassen.nav.no}
+  domain: ${MAKESENDER_DOMAIN:test.arbeidsplassen.nav.no}
   user-id: ${MAKESENDER_USER_ID:}
   api-key: ${MAKESENDER_API_KEY:}
-  sender: no-reply@${MAKESENDER_DOMAIN:arbeidsplassen.nav.no}
+  sender: no-reply@${MAKESENDER_DOMAIN:test.arbeidsplassen.nav.no}

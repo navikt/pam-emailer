@@ -1,5 +1,6 @@
 package no.nav.arbeidsplassen.emailer.make.impl
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import no.nav.arbeidsplassen.emailer.sendmail.Email
 import no.nav.arbeidsplassen.emailer.sendmail.EmailClient
 import no.nav.arbeidsplassen.emailer.sendmail.SendMailException
@@ -30,15 +31,16 @@ class MakeSenderEmailClient(
         .build()
 
     override fun sendEmail(email: Email, id: String) {
-        // Attachments are not supported by the MakeSender integration and are ignored.
+        // Attachments are currently not supported, so we log a warning if there are any attachments in the email
         if (email.attachments.isNotEmpty()) {
             LOG.warn("Email with id $id has ${email.attachments.size} attachment(s) which are not supported by MakeSender and will be ignored")
         }
 
         val body = buildRequestBody(email)
 
+        val response: MakeSenderResponse?
         try {
-            restClient.post()
+            response = restClient.post()
                 .uri("/api/v1/{domain}/messages", properties.domain)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
@@ -49,7 +51,7 @@ class MakeSenderEmailClient(
                         status = HttpStatus.resolve(response.statusCode.value()) ?: HttpStatus.INTERNAL_SERVER_ERROR
                     )
                 }
-                .toBodilessEntity()
+                .body(MakeSenderResponse::class.java)
         } catch (e: SendMailException) {
             LOG.warn("Failed to send email with $id. $e")
             throw e
@@ -58,8 +60,10 @@ class MakeSenderEmailClient(
             throw SendMailException(message = "Failed to send email with $id", e = e)
         }
 
-        LOG.info("Email accepted by MakeSender. Email id: $id")
-        LOG.info(secureLogsMarker, "Email accepted by MakeSender. Email id: $id. Recipient: ${email.recipient}")
+        val makeSenderId = response?.id
+        val message = response?.message
+        LOG.info("Email sent to MakeSender. MakeSender message: $message, makeSenderId: $makeSenderId, emailId: $id")
+        LOG.info(secureLogsMarker, "Email sent to MakeSender. MakeSender message: $message, makeSenderId: $makeSenderId, emailId: $id. Recipient: ${email.recipient}")
     }
 
     private fun buildRequestBody(email: Email): Map<String, String> {
@@ -84,3 +88,9 @@ class MakeSenderEmailClient(
         return "Basic $encoded"
     }
 }
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class MakeSenderResponse(
+    val id: Long?,
+    val message: String?,
+)
