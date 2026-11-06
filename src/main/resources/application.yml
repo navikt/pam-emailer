@@ -24,3 +24,10 @@ management:
     prometheus.enabled: true
     metrics.enabled: true
   prometheus.metrics.export.enabled: true
+
+makesender:
+  base-url: ${MAKESENDER_BASE_URL:https://api.makesender.no}
+  domain: ${MAKESENDER_DOMAIN:arbeidsplassen.nav.no}
+  user-id: ${MAKESENDER_USER_ID:}
+  api-key: ${MAKESENDER_API_KEY:}
+  sender: no-reply@${MAKESENDER_DOMAIN:arbeidsplassen.nav.no}

@@ -1,8 +1,6 @@
 package no.nav.arbeidsplassen.emailer.sendmail
 
 import tools.jackson.databind.ObjectMapper
-import no.nav.arbeidsplassen.emailer.azure.impl.EmailServiceAzure
-import no.nav.arbeidsplassen.emailer.azure.impl.SendMailException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -11,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class EmailService(
     private val emailRepository: OutboxEmailRepository,
-    private val emailServiceAzure: EmailServiceAzure,
+    private val emailClient: EmailClient,
     private val objectMapper: ObjectMapper,
     private val emailQuota: EmailQuota,
     private val metrics: Metrics,
@@ -28,7 +26,7 @@ class EmailService(
             try {
                 LOG.info("Sending email with id $emailId immediately, priority ${email.priority}")
 
-                emailServiceAzure.sendEmailWithExtendedLogging(email, emailId)
+                emailClient.sendEmail(email, emailId)
                 outboxEmail.successfullySent()
 
                 LOG.info("Successfully sent email with id $emailId immediately")
@@ -51,7 +49,7 @@ class EmailService(
             LOG.info("Sending email with id ${outboxEmail.emailId}. Status: ${outboxEmail.status}. Try number: ${outboxEmail.tryNumber()}.")
 
             val email = objectMapper.readValue(outboxEmail.payload, Email::class.java)
-            emailServiceAzure.sendEmailWithExtendedLogging(email, outboxEmail.emailId)
+            emailClient.sendEmail(email, outboxEmail.emailId)
             outboxEmail.successfullySent()
 
             LOG.info("Successfully sent email with id ${outboxEmail.emailId}")

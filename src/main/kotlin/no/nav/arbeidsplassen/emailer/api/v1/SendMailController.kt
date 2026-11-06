@@ -1,6 +1,6 @@
 package no.nav.arbeidsplassen.emailer.api.v1
 
-import no.nav.arbeidsplassen.emailer.azure.impl.SendMailException
+import no.nav.arbeidsplassen.emailer.sendmail.SendMailException
 import no.nav.arbeidsplassen.emailer.sendmail.Attachment
 import no.nav.arbeidsplassen.emailer.sendmail.Email
 import no.nav.arbeidsplassen.emailer.sendmail.EmailService
