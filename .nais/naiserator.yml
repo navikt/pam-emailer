@@ -75,3 +75,6 @@ spec:
         - host: graph.microsoft.com
           ports:
             - port: 443
+        - host: api.makesender.no
+          ports:
+            - port: 443

@@ -1,4 +1,4 @@
-package no.nav.arbeidsplassen.emailer.azure.impl
+package no.nav.arbeidsplassen.emailer.sendmail
 
 import org.springframework.http.HttpStatus
 
@@ -11,4 +11,3 @@ class SendMailException(
         return "${super.toString()}, status code: ${status.value()} ($status)"
     }
 }
-

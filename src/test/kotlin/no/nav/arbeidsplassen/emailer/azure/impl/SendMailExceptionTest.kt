@@ -2,6 +2,7 @@ package no.nav.arbeidsplassen.emailer.azure.impl
 
 import org.junit.jupiter.api.Test
 
+import no.nav.arbeidsplassen.emailer.sendmail.SendMailException
 import org.junit.jupiter.api.Assertions.*
 import org.springframework.http.HttpStatus
 
