@@ -6,3 +6,10 @@ azure:
     clientSecret: "test"
     resource: "test"
     userPrincipal: "test"
+
+makesender:
+  base-url: "https://api.makesender.test"
+  domain: "test.arbeidsplassen.nav.no"
+  user-id: "test"
+  api-key: "test"
+  sender: "no-reply@test.arbeidsplassen.nav.no"

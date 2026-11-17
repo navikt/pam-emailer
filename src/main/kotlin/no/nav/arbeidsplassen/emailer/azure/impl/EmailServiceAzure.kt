@@ -16,6 +16,7 @@ import com.microsoft.graph.users.item.sendmail.SendMailPostRequestBody
 import com.microsoft.kiota.NativeResponseHandler
 import com.microsoft.kiota.ResponseHandlerOption
 import no.nav.arbeidsplassen.emailer.sendmail.Email
+import no.nav.arbeidsplassen.emailer.sendmail.SendMailException
 import okhttp3.Response
 import org.slf4j.LoggerFactory
 import org.slf4j.Marker
