@@ -20,7 +20,7 @@ import java.util.UUID
  *   MAKESENDER_DOMAIN=test.arbeidsplassen.nav.no \
  *   MAKESENDER_USER_ID=... \
  *   MAKESENDER_API_KEY=... \
- *   MAKESENDER_SENDER=no-reply@test.arbeidsplassen.nav.no \
+ *   MAKESENDER_SENDER=Arbeidsplassen.no <no-reply@test.arbeidsplassen.nav.no> \
  *   MAKESENDER_RECIPIENT=you@example.com \
  *   ./gradlew cleanTest test --tests "*MakeSenderManualEmailIT"
  */
@@ -35,7 +35,7 @@ class MakeSenderManualEmailIT {
             domain = domain,
             userId = requireEnv("MAKESENDER_USER_ID"),
             apiKey = requireEnv("MAKESENDER_API_KEY"),
-            sender = env("MAKESENDER_SENDER", "no-reply@$domain"),
+            sender = env("MAKESENDER_SENDER", "Arbeidsplassen.no <no-reply@$domain>"),
         )
 
         val recipient = requireEnv("MAKESENDER_RECIPIENT")

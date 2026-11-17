@@ -26,7 +26,7 @@ class MakeSenderEmailClientTest {
         domain = "arbeidsplassen.nav.no",
         userId = "user",
         apiKey = "key",
-        sender = "no-reply@arbeidsplassen.nav.no",
+        sender = "Arbeidsplassen.no <no-reply@arbeidsplassen.nav.no>",
     )
 
     private val builder = RestClient.builder()
@@ -51,7 +51,7 @@ class MakeSenderEmailClientTest {
             .andExpect(method(org.springframework.http.HttpMethod.POST))
             .andExpect(header(HttpHeaders.AUTHORIZATION, expectedAuth))
             .andExpect(content().contentTypeCompatibleWith("application/json"))
-            .andExpect(jsonPath("$.from").value("no-reply@arbeidsplassen.nav.no"))
+            .andExpect(jsonPath("$.from").value("Arbeidsplassen.no <no-reply@arbeidsplassen.nav.no>"))
             .andExpect(jsonPath("$.to").value("recipient@example.com"))
             .andExpect(jsonPath("$.subject").value("Subject"))
             .andExpect(jsonPath("$.html").value("<p>Hello</p>"))
