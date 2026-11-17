@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClient.RequestHeadersSpec.ConvertibleClientHttpResponse
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
@@ -38,32 +39,46 @@ class MakeSenderEmailClient(
 
         val body = buildRequestBody(email)
 
-        val response: MakeSenderResponse?
-        try {
-            response = restClient.post()
+        // exchange() skips the default status handling, and close = false keeps the response open so we can handle it ourselves
+        val response = try {
+            restClient.post()
                 .uri("/api/v1/{domain}/messages", properties.domain)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
-                .retrieve()
-                .onStatus({ it.isError }) { _, response ->
-                    throw SendMailException(
-                        message = "Failed to send email with $id",
-                        status = HttpStatus.resolve(response.statusCode.value()) ?: HttpStatus.INTERNAL_SERVER_ERROR
-                    )
-                }
-                .body(MakeSenderResponse::class.java)
-        } catch (e: SendMailException) {
-            LOG.warn("Failed to send email with $id. $e")
-            throw e
+                .exchange({ _, response -> response }, false)
         } catch (e: Exception) {
-            LOG.error("Failed to send email with $id. Unknown exception.", e)
+            LOG.error("Failed to send email. Email id: $id. Unknown exception.", e)
             throw SendMailException(message = "Failed to send email with $id", e = e)
         }
 
-        val makeSenderId = response?.id
-        val message = response?.message
-        LOG.info("Email sent to MakeSender. MakeSender message: $message, makeSenderId: $makeSenderId, emailId: $id")
-        LOG.info(secureLogsMarker, "Email sent to MakeSender. MakeSender message: $message, makeSenderId: $makeSenderId, emailId: $id. Recipient: ${email.recipient}")
+        response.use {
+            handleSendMailResponse(it, id, email.recipient)
+        }
+    }
+
+    private fun handleSendMailResponse(response: ConvertibleClientHttpResponse, id: String, recipient: String) {
+        val statusCode = response.statusCode.value()
+        val traceInfo = "Email id: $id. Status: $statusCode."
+        val secureTraceInfo = "$traceInfo Recipient: $recipient."
+
+        if (response.statusCode.isError) {
+            val errorBody = runCatching { response.body.readAllBytes().toString(StandardCharsets.UTF_8) }.getOrNull()
+
+            LOG.error("Failed to send email. $traceInfo")
+            LOG.error(secureLogsMarker, "Failed to send email. $secureTraceInfo Response body: $errorBody")
+
+            throw SendMailException(
+                message = "Failed to send email with $id",
+                status = HttpStatus.resolve(statusCode) ?: HttpStatus.INTERNAL_SERVER_ERROR
+            )
+        }
+
+        // The email is accepted at this point, so a parse failure must not make the caller retry and send it again
+        val makeSenderResponse = runCatching { response.bodyTo(MakeSenderResponse::class.java) }.getOrNull()
+        val makeSenderInfo = "MakeSender message: ${makeSenderResponse?.message}. makeSenderId: ${makeSenderResponse?.id}."
+
+        LOG.info("Email sent to MakeSender. $traceInfo $makeSenderInfo")
+        LOG.info(secureLogsMarker, "Email sent to MakeSender. $secureTraceInfo $makeSenderInfo")
     }
 
     private fun buildRequestBody(email: Email): Map<String, String> {
